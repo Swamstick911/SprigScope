@@ -1,0 +1,35 @@
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+  gap: 16px; padding: 24px; background: #0e1116; color: #e6e6e6;
+  font-family: system-ui, sans-serif;
+}
+h1 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: 0.3px; }
+.board {
+  position: relative; width: min(92vw, 760px); aspect-ratio: 139.7 / 64.77;
+  filter: drop-shadow(0 10px 24px rgba(0,0,0,0.55));
+}
+.board > img.chassis { position: absolute; inset: 0; width: 100%; height: 100%; user-select: none; -webkit-user-drag: none; }
+.screen {
+  position: absolute; image-rendering: pixelated; background: #000;
+  border: 0; padding: 0;
+}
+.btn {
+  position: absolute; transform: translate(-50%, -50%);
+  border-radius: 50%; aspect-ratio: 1; border: none; cursor: pointer;
+  background: transparent;
+}
+.btn::after {
+  content: ''; position: absolute; inset: -6%; border-radius: 50%;
+  box-shadow: 0 0 0 2px transparent; transition: box-shadow 0.05s, background 0.05s;
+}
+.btn.active::after { box-shadow: 0 0 10px 3px #ffd54a; background: rgba(255,213,74,0.25); }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.toolbar select, .toolbar button, .toolbar label {
+  background: #1b2230; color: #e6e6e6; border: 1px solid #2c3647; border-radius: 8px;
+  padding: 7px 12px; font-size: 13px; cursor: pointer;
+}
+.toolbar button:hover, .toolbar label:hover { background: #232c3d; }
+.status { font-size: 12px; color: #8b97a8; min-height: 16px; }
+.hint { font-size: 12px; color: #6b7686; }

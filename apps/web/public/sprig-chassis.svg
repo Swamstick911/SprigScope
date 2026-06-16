@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 139.7 64.77" width="139.7" height="64.77">
+  <defs>
+    <linearGradient id="pcb" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f8f4e"/>
+      <stop offset="1" stop-color="#136b39"/>
+    </linearGradient>
+    <radialGradient id="cap" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#3a3a3a"/>
+      <stop offset="1" stop-color="#141414"/>
+    </radialGradient>
+  </defs>
+
+  <!-- board -->
+  <rect x="0.4" y="0.4" width="138.9" height="63.97" rx="5.08" fill="url(#pcb)" stroke="#0c4f2a" stroke-width="0.8"/>
+
+  <!-- screen bezel (canvas overlays the inner window) -->
+  <rect x="50.3" y="20.7" width="39.1" height="32.05" rx="2" fill="#0a0a0a" stroke="#063b20" stroke-width="0.6"/>
+
+  <!-- gold silk: logo + brand -->
+  <text x="7" y="11" font-family="Verdana, sans-serif" font-size="7" font-weight="700" fill="#e8c46a">sprig</text>
+  <text x="69.85" y="61.8" font-family="Verdana, sans-serif" font-size="3.2" letter-spacing="0.4" fill="#e8c46a" text-anchor="middle">HACK CLUB</text>
+  <circle cx="8.5" cy="15" r="1.1" fill="#7be0a0"/>
+  <circle cx="131" cy="15" r="1.1" fill="#7be0a0"/>
+
+  <!-- button caps + silk labels (centers from spec geometry) -->
+  <circle cx="19.05" cy="31.75" r="4" fill="url(#cap)" stroke="#000" stroke-width="0.3"/>
+  <text x="19.05" y="25.6" font-family="Verdana" font-size="3" fill="#dfe7df" text-anchor="middle">W</text>
+  <circle cx="6.35" cy="44.45" r="4" fill="url(#cap)" stroke="#000" stroke-width="0.3"/>
+  <text x="2.0" y="45.4" font-family="Verdana" font-size="3" fill="#dfe7df" text-anchor="middle">A</text>
+  <circle cx="19.05" cy="57.15" r="4" fill="url(#cap)" stroke="#000" stroke-width="0.3"/>
+  <text x="19.05" y="63.6" font-family="Verdana" font-size="3" fill="#dfe7df" text-anchor="middle">S</text>
+  <circle cx="31.75" cy="44.45" r="4" fill="url(#cap)" stroke="#000" stroke-width="0.3"/>
+  <text x="36.3" y="45.4" font-family="Verdana" font-size="3" fill="#dfe7df" text-anchor="middle">D</text>
+  <circle cx="115.57" cy="31.75" r="4" fill="url(#cap)" stroke="#000" stroke-width="0.3"/>
+  <text x="115.57" y="25.6" font-family="Verdana" font-size="3" fill="#dfe7df" text-anchor="middle">I</text>
+  <circle cx="102.87" cy="44.4" r="4" fill="url(#cap)" stroke="#000" stroke-width="0.3"/>
+  <text x="98.4" y="45.4" font-family="Verdana" font-size="3" fill="#dfe7df" text-anchor="middle">J</text>
+  <circle cx="115.57" cy="57.1" r="4" fill="url(#cap)" stroke="#000" stroke-width="0.3"/>
+  <text x="115.57" y="63.6" font-family="Verdana" font-size="3" fill="#dfe7df" text-anchor="middle">K</text>
+  <circle cx="128.27" cy="44.45" r="4" fill="url(#cap)" stroke="#000" stroke-width="0.3"/>
+  <text x="132.8" y="45.4" font-family="Verdana" font-size="3" fill="#dfe7df" text-anchor="middle">L</text>
+</svg>
