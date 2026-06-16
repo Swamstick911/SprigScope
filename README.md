@@ -19,18 +19,19 @@ Sprig is Hack Club's open-source handheld game console (a Raspberry Pi Pico driv
 
 Everything sits behind one `SprigDevice` interface (160×128 framebuffer out, button input in):
 
-- **Engine backend (today):** runs Sprig game JS via the official open-source `sprig` engine.
-- **Chip backend (planned):** an `rp2040js` hardware emulator for running *any* custom
-  firmware/OS, exactly like real hardware (see `docs/superpowers/specs`).
+- **Engine backend:** runs Sprig game JS via the official open-source `sprig` engine — fast, pixel-perfect, exposes symbolic state.
+- **Chip backend:** an `rp2040js` hardware emulator that boots *any* RP2040 firmware/OS and renders its screen, exactly like real hardware.
 
-The GUI and MCP server depend only on the interface, so the chip backend drops in later
-without touching them.
+The GUI and MCP server depend only on the interface, so either backend drops in without
+touching them.
 
 ```
-packages/core   shared device + the sprig-engine backend (TypeScript, tested)
-apps/web        the virtual Sprig (Vite + TypeScript)
-apps/mcp        the MCP server (Node)
-docs/           design spec + implementation plans
+packages/core     shared device + the sprig-engine backend (TypeScript, tested)
+packages/rp2040   the universal chip backend — boots any RP2040 firmware (rp2040js)
+apps/web          the virtual Sprig (Vite + TypeScript)
+apps/mcp          the MCP server (Node) — engine + chip backends
+firmware/         bundled stock Sprig firmware (pico-os.uf2, MIT)
+docs/             design spec + implementation plans
 ```
 
 ## Quick start
@@ -55,9 +56,10 @@ npm test
 
 - [x] Core engine backend — load game JS, 160×128 render with text, button input (tested)
 - [x] Virtual Sprig web app
-- [x] MCP server — `get_screen`, `get_state`, `press_button`, `load_game`, `reset`, `get_status`
+- [x] MCP server — `get_screen`, `get_state`, `press_button`, `load_game`, `load_firmware`, `reset`, `get_status`
+- [x] Universal chip backend (rp2040js) — boots & renders arbitrary RP2040 firmware/OS (`@sprigscope/rp2040`)
 - [ ] Native desktop shell (Tauri) — wraps the web app unchanged; needs MSVC build tools
-- [ ] Universal chip backend (rp2040js) — run arbitrary RP2040 firmware/OS
+- [ ] Chip backend in the GUI (needs a Web Worker for smooth FPS) — works headless/MCP today
 
 ## Credits & license
 

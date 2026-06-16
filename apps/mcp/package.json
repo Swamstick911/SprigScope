@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@sprigscope/core": "*",
+    "@sprigscope/rp2040": "*",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "pngjs": "^7.0.0",
     "zod": "^3.23.0"
