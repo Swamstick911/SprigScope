@@ -125,7 +125,7 @@ the chassis from the MIT PCB geometry.
 
 ## 3. Architecture
 
-Single TypeScript monorepo (pnpm). The `SprigDevice` interface is the seam; the engine
+Single TypeScript monorepo (npm workspaces). The `SprigDevice` interface is the seam; the engine
 backend implements it for v1; the GUI (Tauri webview, runs the device in a Web Worker) and
 the MCP server (Node, headless) are both clients.
 
@@ -239,7 +239,7 @@ already exact).
 
 ## 7. Project structure & tooling
 
-pnpm workspaces; TypeScript; Vitest. `packages/core` is platform-agnostic via
+npm workspaces (npm 11 present; pnpm not installed); TypeScript; Vitest. `packages/core` is platform-agnostic via
 `platform/imagedata` (Node shim vs browser native). `apps/mcp` (Node) and `apps/desktop`
 (Tauri) depend on `core`.
 
