@@ -2,7 +2,7 @@ import { installImageDataShim } from '../platform/imagedata';
 installImageDataShim(); // must run before the engine constructs any ImageData
 
 import { imageDataEngine } from 'sprig/image-data';
-import type { Button, DeviceStatus, Framebuffer, SprigDevice } from '../device';
+import type { Button, DeviceStatus, Framebuffer, GameStateSnapshot, SprigDevice } from '../device';
 import { SCREEN_W, SCREEN_H, blankScreen, compositeOver } from '../framebuffer';
 import { scaleToScreen } from '../render/scale';
 import { renderTextOverlay, type TextElement } from '../render/text';
@@ -56,6 +56,16 @@ export class EngineBackend implements SprigDevice {
 
   getStatus(): DeviceStatus {
     return { running: this.game !== null, loaded: this.game !== null, backend: 'engine', title: this.title };
+  }
+
+  getState(): GameStateSnapshot | null {
+    if (!this.game) return null;
+    const s = this.game.state;
+    return {
+      dimensions: { width: s.dimensions.width, height: s.dimensions.height },
+      sprites: s.sprites.map((sp) => ({ type: sp.type, x: sp.x, y: sp.y })),
+      texts: s.texts.map((t) => ({ x: t.x, y: t.y, content: t.content })),
+    };
   }
 
   private renderFrame(game: Engine): Uint8ClampedArray {

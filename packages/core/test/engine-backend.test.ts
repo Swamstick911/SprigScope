@@ -76,6 +76,15 @@ describe('EngineBackend', () => {
     expect(() => dev.loadGame('this is not ( valid javascript')).toThrow(/Failed to load game/);
   });
 
+  it('getState reports dimensions and sprite positions', () => {
+    const dev = new EngineBackend();
+    expect(dev.getState!()).toBeNull(); // nothing loaded
+    dev.loadGame(GAME);
+    const st = dev.getState!()!;
+    expect(st.dimensions).toEqual({ width: 10, height: 8 });
+    expect(st.sprites.some((s) => s.type === 'r' && s.x === 0 && s.y === 0)).toBe(true);
+  });
+
   it('reset re-runs the last game to a clean state', () => {
     const dev = new EngineBackend();
     dev.loadGame(GAME);

@@ -19,6 +19,13 @@ export interface DeviceStatus {
   title?: string;
 }
 
+/** A symbolic snapshot of what's on screen — cheap for an AI to reason over. */
+export interface GameStateSnapshot {
+  dimensions: { width: number; height: number };
+  sprites: { type: string; x: number; y: number }[];
+  texts: { x: number; y: number; content: string }[];
+}
+
 /**
  * Backend-agnostic Sprig device. The engine backend and the future rp2040 chip
  * backend both implement this; the GUI and MCP server depend only on it.
@@ -37,4 +44,6 @@ export interface SprigDevice {
   /** Subscribe to frames (fired after load and after each input). Returns an unsubscribe fn. */
   onFrame(cb: (fb: Framebuffer) => void): () => void;
   getStatus(): DeviceStatus;
+  /** Symbolic game state — available on the engine backend; pixel-only backends omit it. */
+  getState?(): GameStateSnapshot | null;
 }

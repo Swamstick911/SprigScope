@@ -1,4 +1,4 @@
-export type { Button, Framebuffer, DeviceStatus, SprigDevice } from './device';
+export type { Button, Framebuffer, DeviceStatus, GameStateSnapshot, SprigDevice } from './device';
 export { BUTTONS } from './device';
 export { SCREEN_W, SCREEN_H, blankScreen, compositeOver } from './framebuffer';
 export { scaleToScreen, type SourceImage } from './render/scale';
