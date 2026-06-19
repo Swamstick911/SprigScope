@@ -3,6 +3,8 @@
 A virtual [Sprig](https://sprig.hackclub.com/) on your computer — run and see Sprig games
 without the hardware, and let an AI play them too.
 
+**Live demo:** https://swamstick911.github.io/SprigScope/
+
 Sprig is Hack Club's open-source handheld game console (a Raspberry Pi Pico driving a
 160×128 screen with two button pads). SprigScope reproduces it on the desktop:
 
@@ -60,6 +62,13 @@ npm test
 - [x] Universal chip backend (rp2040js) — boots & renders arbitrary RP2040 firmware/OS (`@sprigscope/rp2040`)
 - [x] **Firmware in the 3D GUI** — "Boot stock OS" or load any `.uf2`; the emulator runs in a Web Worker
 - [ ] Native desktop shell (Tauri) — wraps the web app unchanged; needs MSVC build tools
+
+## Deploy
+
+The web app ships to **GitHub Pages** via `.github/workflows/deploy.yml` on every push to
+`master`. To turn it on once: repo **Settings → Pages → Build and deployment → Source:
+GitHub Actions**. The workflow runs the tests, builds with the correct base path
+(`--base=/SprigScope/`), and publishes `apps/web/dist`. The result is live at the URL above.
 
 ## Credits & license
 
