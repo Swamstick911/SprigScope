@@ -55,11 +55,11 @@ npm test
 ## Status
 
 - [x] Core engine backend — load game JS, 160×128 render with text, button input (tested)
-- [x] Virtual Sprig web app
+- [x] **3D virtual Sprig web app** — the real `sprig.glb` model with the live screen + clickable buttons
 - [x] MCP server — `get_screen`, `get_state`, `press_button`, `load_game`, `load_firmware`, `reset`, `get_status`
 - [x] Universal chip backend (rp2040js) — boots & renders arbitrary RP2040 firmware/OS (`@sprigscope/rp2040`)
+- [x] **Firmware in the 3D GUI** — "Boot stock OS" or load any `.uf2`; the emulator runs in a Web Worker
 - [ ] Native desktop shell (Tauri) — wraps the web app unchanged; needs MSVC build tools
-- [ ] Chip backend in the GUI (needs a Web Worker for smooth FPS) — works headless/MCP today
 
 ## Credits & license
 
