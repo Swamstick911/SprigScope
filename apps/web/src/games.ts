@@ -117,8 +117,41 @@ draw(); hud();
 setInterval(tick, 180);
 `;
 
+const DODGE = `
+const player = bitmap\`${PLAYER}\`;
+const rock = bitmap\`${ROCK}\`;
+const wall = bitmap\`${WALL}\`;
+setLegend(['p', player], ['o', rock], ['w', wall]);
+setMap(map\`
+wwwwwwwwww
+w........w
+w........w
+w........w
+w........w
+w........w
+w...p....w
+wwwwwwwwww\`);
+const W = width(), H = height();
+let dead = false, score = 0;
+const hud = () => { clearText(); addText((dead ? 'Crashed!  ' : '') + 'Score ' + score, { x: 0, y: 0, color: color\`6\` }); };
+const move = (dx) => { if (dead) return; const p = getFirst('p'); const nx = p.x + dx; if (nx >= 1 && nx < W - 1) p.x = nx; };
+onInput('a', () => move(-1)); onInput('d', () => move(1));
+onInput('j', () => move(-1)); onInput('l', () => move(1));
+const tick = () => {
+  if (dead) return;
+  getAll('o').forEach((o) => { if (o.y + 1 >= H - 1) o.remove(); else o.y += 1; });
+  const p = getFirst('p');
+  if (getTile(p.x, p.y).some((s) => s.type === 'o')) { dead = true; hud(); return; }
+  if (Math.random() < 0.7) { const x = 1 + Math.floor(Math.random() * (W - 2)); addSprite(x, 1, 'o'); }
+  score++; hud();
+};
+hud();
+setInterval(tick, 320);
+`;
+
 export const DEMO_GAMES: DemoGame[] = [
   { name: 'Sokoban', source: SOKOBAN },
   { name: 'Collector', source: COLLECTOR },
   { name: 'Snake', source: SNAKE },
+  { name: 'Dodge', source: DODGE },
 ];
