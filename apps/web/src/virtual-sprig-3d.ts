@@ -11,6 +11,7 @@ export interface VirtualSprig3D {
   updateScreen(fb: Framebuffer): void;
   setActive(btn: Button, active: boolean): void;
   onPress(cb: (btn: Button) => void): void;
+  onReady(cb: () => void): void;
   render(): void;
   screenshot(): string;
   dispose(): void;
@@ -67,6 +68,7 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
   const btnScale = new Map<Button, number>();
   let glass: THREE.Mesh | null = null;
   let loaded = false;
+  const readyCbs: (() => void)[] = [];
 
   const loader = new GLTFLoader();
   loader.load(
@@ -105,6 +107,7 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
         if (node) { btnNodes.set(b, node); btnScale.set(b, node.scale.x); }
       }
       loaded = true;
+      readyCbs.forEach((cb) => cb());
     },
     undefined,
     (err) => { console.error('Failed to load Sprig model:', err); },
@@ -157,6 +160,7 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
     updateScreen(fb) { texBuf.set(fb.data); screenTex.needsUpdate = true; },
     setActive,
     onPress(cb) { pressCbs.push(cb); },
+    onReady(cb) { if (loaded) cb(); else readyCbs.push(cb); },
     render() {
       if (loaded && !userInteracted) pivot.rotation.y = Math.sin(performance.now() * 0.0005) * 0.4;
       controls.update();
