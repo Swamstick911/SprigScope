@@ -17,10 +17,28 @@ export interface VirtualSprig3D {
   dispose(): void;
 }
 
+function webglAvailable(): boolean {
+  try {
+    const c = document.createElement('canvas');
+    return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl')));
+  } catch {
+    return false;
+  }
+}
+
 export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
   const container = document.createElement('div');
   container.className = 'stage';
   parent.appendChild(container);
+
+  if (!webglAvailable()) {
+    container.innerHTML =
+      '<div style="display:grid;place-items:center;height:100%;padding:24px;text-align:center;color:#8b97a8;font-size:14px;line-height:1.6">' +
+      "This browser/GPU can't run WebGL, which the 3D Sprig needs.<br>Try a recent Chrome, Edge, Firefox, or Safari." +
+      '</div>';
+    const noop = () => {};
+    return { updateScreen: noop, setActive: noop, onPress: noop, onReady: (cb) => cb(), render: noop, screenshot: () => '', dispose: noop };
+  }
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
