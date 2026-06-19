@@ -5,7 +5,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { BUTTONS, type Button, type Framebuffer } from '@sprigscope/core';
 
 const SCREEN_W = 160, SCREEN_H = 128;
-const MODEL_URL = '/sprig.glb';
+const MODEL_URL = import.meta.env.BASE_URL + 'sprig.glb';
 
 export interface VirtualSprig3D {
   updateScreen(fb: Framebuffer): void;
