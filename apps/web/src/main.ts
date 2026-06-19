@@ -53,10 +53,12 @@ function ensureWorker(): Worker {
   if (!chipWorker) {
     chipWorker = new Worker(new URL('./chip-worker.ts', import.meta.url), { type: 'module' });
     chipWorker.onmessage = (e: MessageEvent) => {
-      const m = e.data as { type: string; data?: ArrayBuffer };
+      const m = e.data as { type: string; data?: ArrayBuffer; message?: string };
       if (m.type === 'frame' && m.data && mode === 'chip') {
         latestChipFrame = { width: 160, height: 128, data: new Uint8ClampedArray(m.data) };
         status('Firmware running');
+      } else if (m.type === 'error') {
+        status(m.message || 'Firmware error', true);
       }
     };
   }
