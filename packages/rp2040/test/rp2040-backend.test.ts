@@ -39,4 +39,9 @@ describe('Rp2040Backend (universal chip backend)', () => {
     const dev = new Rp2040Backend();
     expect(() => dev.loadGame('whatever')).toThrow(/loadFirmware/);
   });
+
+  it('rejects a non-UF2 file with a clear error', () => {
+    const dev = new Rp2040Backend();
+    expect(() => dev.loadFirmware(new Uint8Array(512).fill(0x42))).toThrow(/UF2/);
+  });
 });

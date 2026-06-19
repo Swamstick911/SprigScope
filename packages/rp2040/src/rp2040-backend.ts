@@ -39,6 +39,10 @@ export class Rp2040Backend implements SprigDevice {
 
   /** Boot an arbitrary RP2040 firmware image (the universal capability). */
   loadFirmware(uf2: Uint8Array, title?: string): void {
+    // Reject anything that isn't a UF2 (magic 'UF2\n' = 0x0A324655, little-endian).
+    if (uf2.byteLength < 512 || new DataView(uf2.buffer, uf2.byteOffset, 4).getUint32(0, true) !== 0x0a324655) {
+      throw new Error('Not a valid UF2 firmware file.');
+    }
     this.chip.loadFirmware(uf2);
     this.chip.runFor(this.bootMs);
     this.title = title;
