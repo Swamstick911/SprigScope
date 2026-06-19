@@ -62,7 +62,63 @@ afterInput(() => {
 });
 `;
 
+const SNAKE = `
+const head = bitmap\`${PLAYER}\`;
+const body = bitmap\`${BODY}\`;
+const apple = bitmap\`${FOOD}\`;
+const wall = bitmap\`${WALL}\`;
+setLegend(['h', head], ['b', body], ['f', apple], ['w', wall]);
+setMap(map\`
+wwwwwwwwww
+w........w
+w........w
+w........w
+w........w
+w........w
+w........w
+wwwwwwwwww\`);
+const W = width(), H = height();
+let snake = [{ x: 5, y: 4 }, { x: 4, y: 4 }, { x: 3, y: 4 }];
+let dir = { x: 1, y: 0 }, next = { x: 1, y: 0 }, dead = false, score = 0;
+let fx = 7, fy = 2;
+const free = () => {
+  for (let t = 0; t < 300; t++) {
+    const x = 1 + Math.floor(Math.random() * (W - 2));
+    const y = 1 + Math.floor(Math.random() * (H - 2));
+    if (!snake.some((s) => s.x === x && s.y === y)) return { x, y };
+  }
+  return { x: 1, y: 1 };
+};
+const hud = () => { clearText(); addText((dead ? 'Game over  ' : '') + 'Score ' + score, { x: 0, y: 0, color: color\`6\` }); };
+const draw = () => {
+  getAll('h').forEach((s) => s.remove());
+  getAll('b').forEach((s) => s.remove());
+  getAll('f').forEach((s) => s.remove());
+  snake.forEach((s, i) => addSprite(s.x, s.y, i === 0 ? 'h' : 'b'));
+  addSprite(fx, fy, 'f');
+};
+const turn = (x, y) => { if (dir.x + x !== 0 || dir.y + y !== 0) next = { x, y }; };
+onInput('w', () => turn(0, -1)); onInput('s', () => turn(0, 1));
+onInput('a', () => turn(-1, 0)); onInput('d', () => turn(1, 0));
+onInput('i', () => turn(0, -1)); onInput('k', () => turn(0, 1));
+onInput('j', () => turn(-1, 0)); onInput('l', () => turn(1, 0));
+const tick = () => {
+  if (dead) return;
+  dir = next;
+  const nx = snake[0].x + dir.x, ny = snake[0].y + dir.y;
+  if (nx < 1 || ny < 1 || nx >= W - 1 || ny >= H - 1 || snake.slice(0, -1).some((s) => s.x === nx && s.y === ny)) {
+    dead = true; hud(); return;
+  }
+  snake.unshift({ x: nx, y: ny });
+  if (nx === fx && ny === fy) { score++; const f = free(); fx = f.x; fy = f.y; } else { snake.pop(); }
+  draw(); hud();
+};
+draw(); hud();
+setInterval(tick, 180);
+`;
+
 export const DEMO_GAMES: DemoGame[] = [
   { name: 'Sokoban', source: SOKOBAN },
   { name: 'Collector', source: COLLECTOR },
+  { name: 'Snake', source: SNAKE },
 ];
