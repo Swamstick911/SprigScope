@@ -1,144 +1,68 @@
+import { PLAYER, WALL, CRATE, GOAL, COIN, BODY, FOOD, ROCK } from './sprites';
+
 export interface DemoGame { name: string; source: string; }
 
-const MOVER = `
-const player = bitmap\`
-................
-......0000......
-.....033330.....
-....03333330....
-....03.33.30....
-....03333330....
-....03000030....
-....03333330....
-.....033330.....
-......0000......
-................
-................
-................
-................
-................
-................\`;
-const wall = bitmap\`
-LLLLLLLLLLLLLLLL
-L11111111111111L
-L11111111111111L
-L11111111111111L
-L11111111111111L
-L11111111111111L
-L11111111111111L
-L11111111111111L
-L11111111111111L
-L11111111111111L
-L11111111111111L
-L11111111111111L
-L11111111111111L
-L11111111111111L
-L11111111111111L
-LLLLLLLLLLLLLLLL\`;
-setLegend(['p', player], ['w', wall]);
-setSolids(['p', 'w']);
+const SOKOBAN = `
+const player = bitmap\`${PLAYER}\`;
+const crate = bitmap\`${CRATE}\`;
+const goal = bitmap\`${GOAL}\`;
+const wall = bitmap\`${WALL}\`;
+setLegend(['p', player], ['c', crate], ['g', goal], ['w', wall]);
+setSolids(['p', 'w', 'c']);
+setPushables({ p: ['c'] });
 setMap(map\`
 wwwwwwwwww
+wp.......w
 w........w
+w..c.g...w
 w........w
-w...p....w
-w........w
-w........w
+w..c.g...w
 w........w
 wwwwwwwwww\`);
-onInput('w', () => { getFirst('p').y -= 1; });
-onInput('s', () => { getFirst('p').y += 1; });
-onInput('a', () => { getFirst('p').x -= 1; });
-onInput('d', () => { getFirst('p').x += 1; });
-onInput('i', () => { getFirst('p').y -= 1; });
-onInput('k', () => { getFirst('p').y += 1; });
-onInput('j', () => { getFirst('p').x -= 1; });
-onInput('l', () => { getFirst('p').x += 1; });
+const goals = getAll('g').length;
+const hud = (m) => { clearText(); addText(m, { x: 0, y: 0, color: color\`4\` }); };
+hud('Push crates onto the rings');
+const move = (dx, dy) => { const p = getFirst('p'); p.x += dx; p.y += dy; };
+onInput('w', () => move(0, -1)); onInput('s', () => move(0, 1));
+onInput('a', () => move(-1, 0)); onInput('d', () => move(1, 0));
+onInput('i', () => move(0, -1)); onInput('k', () => move(0, 1));
+onInput('j', () => move(-1, 0)); onInput('l', () => move(1, 0));
+afterInput(() => { if (tilesWith('c', 'g').length === goals) hud('Solved! Nice.'); });
 `;
 
-const COLLECT = `
-const player = bitmap\`
-................
-......0000......
-.....077770.....
-....07777770....
-....07.77.70....
-....07777770....
-....07777770....
-.....077770.....
-......0000......
-................
-................
-................
-................
-................
-................
-................\`;
-const coin = bitmap\`
-................
-................
-......6666......
-.....666666.....
-....66666666....
-....66666666....
-....66666666....
-....66666666....
-.....666666.....
-......6666......
-................
-................
-................
-................
-................
-................\`;
-const wall = bitmap\`
-LLLLLLLLLLLLLLLL
-L00000000000000L
-L00000000000000L
-L00000000000000L
-L00000000000000L
-L00000000000000L
-L00000000000000L
-L00000000000000L
-L00000000000000L
-L00000000000000L
-L00000000000000L
-L00000000000000L
-L00000000000000L
-L00000000000000L
-L00000000000000L
-LLLLLLLLLLLLLLLL\`;
-setLegend(['p', player], ['c', coin], ['w', wall]);
+const COLLECTOR = `
+const player = bitmap\`${PLAYER}\`;
+const coin = bitmap\`${COIN}\`;
+const wall = bitmap\`${WALL}\`;
+setLegend(['p', player], ['o', coin], ['w', wall]);
 setSolids(['p', 'w']);
 setMap(map\`
 wwwwwwwwww
-w..c...c.w
-w........w
-w...p....w
-w.c......w
-w....c..cw
-w..c.....w
+w.o....o.w
+w...ww...w
+w.p..o...w
+w..ww..o.w
+w.o....o.w
+w...o....w
 wwwwwwwwww\`);
-let score = 0;
-const draw = () => { clearText(); addText('Coins: ' + score, { x: 0, y: 0, color: color\`6\` }); };
-draw();
+const total = getAll('o').length;
+let got = 0;
+const hud = () => { clearText(); addText('Coins ' + got + '/' + total, { x: 0, y: 0, color: color\`6\` }); };
+hud();
 const move = (dx, dy) => { const p = getFirst('p'); p.x += dx; p.y += dy; };
-onInput('w', () => move(0, -1));
-onInput('s', () => move(0, 1));
-onInput('a', () => move(-1, 0));
-onInput('d', () => move(1, 0));
-onInput('i', () => move(0, -1));
-onInput('k', () => move(0, 1));
-onInput('j', () => move(-1, 0));
-onInput('l', () => move(1, 0));
+onInput('w', () => move(0, -1)); onInput('s', () => move(0, 1));
+onInput('a', () => move(-1, 0)); onInput('d', () => move(1, 0));
+onInput('i', () => move(0, -1)); onInput('k', () => move(0, 1));
+onInput('j', () => move(-1, 0)); onInput('l', () => move(1, 0));
 afterInput(() => {
   const p = getFirst('p');
-  const coins = getTile(p.x, p.y).filter((s) => s.type === 'c');
-  if (coins.length) { coins.forEach((s) => s.remove()); score += coins.length; draw(); }
+  const here = getTile(p.x, p.y).filter((s) => s.type === 'o');
+  if (here.length) { here.forEach((s) => s.remove()); got += here.length; hud(); }
+  if (got === total) { clearText(); addText('All collected!', { x: 0, y: 1, color: color\`4\` }); }
 });
 `;
 
 export const DEMO_GAMES: DemoGame[] = [
-  { name: 'Mover', source: MOVER },
-  { name: 'Collect', source: COLLECT },
+  { name: 'Sokoban', source: SOKOBAN },
+  { name: 'Collector', source: COLLECTOR },
 ];
