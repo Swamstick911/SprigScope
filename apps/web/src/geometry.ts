@@ -20,3 +20,8 @@ export const BUTTON_POS: Record<Button, { x: number; y: number }> = {
 
 /** Button cap diameter as a fraction of board width (~8mm / 139.7mm). */
 export const BUTTON_DIAMETER = 0.057;
+
+/** Map a board fraction (0..1, origin top-left) to model-local coords (origin center, +y up). */
+export function boardFractionToLocal(fx: number, fy: number, bodyW: number, bodyH: number): { x: number; y: number } {
+  return { x: (fx - 0.5) * bodyW, y: (0.5 - fy) * bodyH };
+}

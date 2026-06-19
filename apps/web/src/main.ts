@@ -1,6 +1,6 @@
 import './styles.css';
 import { EngineBackend, BUTTONS, type Button } from '@sprigscope/core';
-import { mountVirtualSprig } from './virtual-sprig';
+import { mountVirtualSprig3D } from './virtual-sprig-3d';
 import { DEMO_GAMES } from './games';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -9,8 +9,7 @@ const title = document.createElement('h1');
 title.textContent = 'SprigScope — Virtual Sprig';
 app.appendChild(title);
 
-const vs = mountVirtualSprig(app);
-const ctx = vs.canvas.getContext('2d')!;
+const vs = mountVirtualSprig3D(app);
 const device = new EngineBackend();
 
 // --- toolbar ---
@@ -47,7 +46,7 @@ toolbar.appendChild(makeButton('Reset', () => device.reset()));
 toolbar.appendChild(makeButton('Screenshot', () => {
   const a = document.createElement('a');
   a.download = 'sprig-screen.png';
-  a.href = vs.canvas.toDataURL('image/png');
+  a.href = vs.screenshot();
   a.click();
 }));
 
@@ -90,11 +89,9 @@ window.addEventListener('keyup', (e) => {
 window.addEventListener('pointerup', () => BUTTONS.forEach((b) => vs.setActive(b, false)));
 
 // --- render loop ---
-const screen = new ImageData(160, 128);
 function frame() {
-  const fb = device.getFramebuffer();
-  screen.data.set(fb.data);
-  ctx.putImageData(screen, 0, 0);
+  vs.updateScreen(device.getFramebuffer());
+  vs.render();
   requestAnimationFrame(frame);
 }
 

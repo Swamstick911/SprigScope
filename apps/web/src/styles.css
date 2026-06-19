@@ -6,25 +6,9 @@ body {
   font-family: system-ui, sans-serif;
 }
 h1 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: 0.3px; }
-.board {
-  position: relative; width: min(92vw, 760px); aspect-ratio: 139.7 / 64.77;
-  filter: drop-shadow(0 10px 24px rgba(0,0,0,0.55));
-}
-.board > img.chassis { position: absolute; inset: 0; width: 100%; height: 100%; user-select: none; -webkit-user-drag: none; }
-.screen {
-  position: absolute; image-rendering: pixelated; background: #000;
-  border: 0; padding: 0;
-}
-.btn {
-  position: absolute; transform: translate(-50%, -50%);
-  border-radius: 50%; aspect-ratio: 1; border: none; cursor: pointer;
-  background: transparent;
-}
-.btn::after {
-  content: ''; position: absolute; inset: -6%; border-radius: 50%;
-  box-shadow: 0 0 0 2px transparent; transition: box-shadow 0.05s, background 0.05s;
-}
-.btn.active::after { box-shadow: 0 0 10px 3px #ffd54a; background: rgba(255,213,74,0.25); }
+.stage { width: min(94vw, 900px); height: 540px; cursor: grab; touch-action: none; }
+.stage:active { cursor: grabbing; }
+.stage canvas { display: block; width: 100%; height: 100%; border-radius: 12px; }
 .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .toolbar select, .toolbar button, .toolbar label {
   background: #1b2230; color: #e6e6e6; border: 1px solid #2c3647; border-radius: 8px;
