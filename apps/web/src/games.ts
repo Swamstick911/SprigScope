@@ -149,9 +149,35 @@ hud();
 setInterval(tick, 320);
 `;
 
+const MAZE = `
+const player = bitmap\`${PLAYER}\`;
+const goal = bitmap\`${GOAL}\`;
+const wall = bitmap\`${WALL}\`;
+setLegend(['p', player], ['g', goal], ['w', wall]);
+setSolids(['p', 'w']);
+setMap(map\`
+wwwwwwwwww
+wp.......w
+wwwwwww..w
+w........w
+w..wwwwwww
+w........w
+wwwwwww.gw
+wwwwwwwwww\`);
+const hud = (m) => { clearText(); addText(m, { x: 0, y: 0, color: color\`7\` }); };
+hud('Find the exit');
+const move = (dx, dy) => { const p = getFirst('p'); p.x += dx; p.y += dy; };
+onInput('w', () => move(0, -1)); onInput('s', () => move(0, 1));
+onInput('a', () => move(-1, 0)); onInput('d', () => move(1, 0));
+onInput('i', () => move(0, -1)); onInput('k', () => move(0, 1));
+onInput('j', () => move(-1, 0)); onInput('l', () => move(1, 0));
+afterInput(() => { const p = getFirst('p'); if (getTile(p.x, p.y).some((s) => s.type === 'g')) hud('You escaped!'); });
+`;
+
 export const DEMO_GAMES: DemoGame[] = [
   { name: 'Sokoban', source: SOKOBAN },
   { name: 'Collector', source: COLLECTOR },
   { name: 'Snake', source: SNAKE },
   { name: 'Dodge', source: DODGE },
+  { name: 'Maze', source: MAZE },
 ];
