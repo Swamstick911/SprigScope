@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "rm -rf node_modules apps/*/node_modules packages/*/node_modules && npm ci",
+  "installCommand": "rm -rf node_modules apps/*/node_modules packages/*/node_modules && npm ci --include=dev --include=optional --include=prod",
   "buildCommand": "npm run build -w @sprigscope/web",
   "outputDirectory": "apps/web/dist"
 }
