@@ -14,7 +14,7 @@ const ANNOS: Anno[] = [
   { node: 'a', label: 'move · W A S D', side: 'l' },
   { node: 'l', label: 'action · I J K L', side: 'r' },
   { node: 'power', label: 'power switch', side: 'r' },
-  { node: 'usbc', label: 'USB-C', side: 'l' },
+  { node: 'usbc', label: 'micro-USB', side: 'l' },
   // flip it over → the back
   { node: 'rp2040', label: 'Raspberry Pi Pico', side: 'r' },
   { node: 'speaker', label: 'speaker', side: 'l' },
