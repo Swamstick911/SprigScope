@@ -7,6 +7,10 @@ import { BUTTONS, type Button, type Framebuffer } from '@sprigscope/core';
 const SCREEN_W = 160, SCREEN_H = 128;
 const MODEL_URL = import.meta.env.BASE_URL + 'sprig.glb';
 
+/** Screen-space position (CSS px, relative to the stage) of a model component,
+ *  plus whether it currently faces the camera. */
+export interface Anchor { x: number; y: number; front: boolean; }
+
 export interface VirtualSprig3D {
   updateScreen(fb: Framebuffer): void;
   setActive(btn: Button, active: boolean): void;
@@ -14,6 +18,15 @@ export interface VirtualSprig3D {
   onReady(cb: () => void): void;
   render(): void;
   screenshot(): string;
+  /** Project a named component ('screen', a button letter, or a model node name)
+   *  to stage pixels so an overlay label can point at it. Null until loaded. */
+  getAnchor(name: string): Anchor | null;
+  /** Move the 3D stage into another container and refit (used to hand the model
+   *  from the landing screen to the app without reloading it). */
+  reparent(parent: HTMLElement): void;
+  /** How much margin to leave around the model when framing (1 = tight). The
+   *  landing uses a larger value so there's room for copy beside the device. */
+  setFraming(margin: number): void;
   dispose(): void;
 }
 
@@ -37,7 +50,7 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
       "This browser/GPU can't run WebGL, which the 3D Sprig needs.<br>Try a recent Chrome, Edge, Firefox, or Safari." +
       '</div>';
     const noop = () => {};
-    return { updateScreen: noop, setActive: noop, onPress: noop, onReady: (cb) => cb(), render: noop, screenshot: () => '', dispose: noop };
+    return { updateScreen: noop, setActive: noop, onPress: noop, onReady: (cb) => cb(), render: noop, screenshot: () => '', getAnchor: () => null, reparent: noop, setFraming: noop, dispose: noop };
   }
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
@@ -84,11 +97,12 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
   // Fit the model within the viewport on whichever axis is tighter, so the wide
   // device still fills a tall/narrow phone screen. Recomputed on resize.
   let modelRadius = 0;
+  let frameMargin = 1.05;
   const frameCamera = (): void => {
     if (!modelRadius) return;
     const vFov = (camera.fov * Math.PI) / 180;
     const hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
-    const dist = (modelRadius / Math.sin(Math.min(vFov, hFov) / 2)) * 1.05;
+    const dist = (modelRadius / Math.sin(Math.min(vFov, hFov) / 2)) * frameMargin;
     camera.position.set(0, 0, dist);
     controls.target.set(0, 0, 0);
     controls.minDistance = dist * 0.5;
@@ -100,6 +114,7 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
   const btnNodes = new Map<Button, THREE.Object3D>();
   const btnScale = new Map<Button, number>();
   let glass: THREE.Mesh | null = null;
+  let modelRoot: THREE.Object3D | null = null;
   let loaded = false;
   const readyCbs: (() => void)[] = [];
 
@@ -108,6 +123,7 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
     MODEL_URL,
     (gltf) => {
       const model = gltf.scene;
+      modelRoot = model;
       model.rotation.x = Math.PI / 2;
       model.rotation.y = -Math.PI / 2;
       pivot.add(model);
@@ -125,7 +141,7 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
         (c) => (c as THREE.Mesh).material && ((c as THREE.Mesh).material as THREE.Material).name === 'Glow Glass',
       ) as THREE.Mesh | undefined;
       if (found) {
-        found.material = new THREE.MeshBasicMaterial({ map: screenTex });
+        found.material = new THREE.MeshBasicMaterial({ map: screenTex, side: THREE.DoubleSide });
         glass = found;
       }
 
@@ -134,6 +150,21 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
         const node = model.getObjectByName(b.toUpperCase());
         if (node) { btnNodes.set(b, node); btnScale.set(b, node.scale.x); }
       }
+      // Invisible anchor points for components the model doesn't name, so labels
+      // can still point at them. Local frame (from the named nodes): +x is down
+      // the board, +z is left, +y is toward the front face. Front parts sit near
+      // the button plane (y≈0.4); the Pico + buzzer live on the back (y≈-4).
+      const anchor = (name: string, x: number, y: number, z: number): void => {
+        const o = new THREE.Object3D();
+        o.name = name;
+        o.position.set(x, y, z);
+        model.add(o);
+      };
+      anchor('power', 7.9, 0.4, -3.0); // front, top-right slide switch
+      anchor('usbc', 7.2, 0.4, 0.5); // front, top edge centre
+      anchor('rp2040', 9.5, -4.2, 0.0); // back, centre (Raspberry Pi Pico)
+      anchor('speaker', 10.4, -4.2, 2.4); // back, lower-left buzzer
+
       loaded = true;
       readyCbs.forEach((cb) => cb());
     },
@@ -185,6 +216,27 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
   };
   window.addEventListener('resize', onResize);
 
+  // Project a component to stage pixels + decide if it's on the face toward the
+  // camera (so back-facing labels can hide). Compare camera-space depth to the
+  // model centre: a point nearer the camera than the centre is on the front.
+  const _wp = new THREE.Vector3();
+  const _cn = new THREE.Vector3();
+  const resolveNode = (name: string): THREE.Object3D | null => {
+    if (name === 'screen') return glass;
+    if (name.length === 1 && btnNodes.has(name as Button)) return btnNodes.get(name as Button) ?? null;
+    return modelRoot ? modelRoot.getObjectByName(name) ?? null : null;
+  };
+  const getAnchor = (name: string): Anchor | null => {
+    const node = resolveNode(name);
+    if (!node || !loaded) return null;
+    node.getWorldPosition(_wp);
+    pivot.getWorldPosition(_cn);
+    const front = _wp.clone().applyMatrix4(camera.matrixWorldInverse).z >=
+      _cn.applyMatrix4(camera.matrixWorldInverse).z;
+    _wp.project(camera);
+    return { x: (_wp.x * 0.5 + 0.5) * w, y: (-_wp.y * 0.5 + 0.5) * h, front };
+  };
+
   return {
     updateScreen(fb) { texBuf.set(fb.data); screenTex.needsUpdate = true; },
     setActive,
@@ -196,6 +248,17 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
       renderer.render(scene, camera);
     },
     screenshot() { renderer.render(scene, camera); return renderer.domElement.toDataURL('image/png'); },
+    getAnchor,
+    reparent(newParent: HTMLElement) {
+      frameMargin = 1.05; // the app stage wants the device to fill the frame
+      newParent.appendChild(container);
+      onResize();
+      frameCamera();
+    },
+    setFraming(margin: number) {
+      frameMargin = margin;
+      frameCamera();
+    },
     dispose() {
       window.removeEventListener('resize', onResize);
       controls.dispose();
