@@ -268,8 +268,8 @@ export class SprigRp2040 {
   private args: number[] = [];
   private cs = 0; private ce = SprigRp2040.W - 1;
   private rs = 0; private re = SprigRp2040.H - 1;
-  private px = 0; private py = 0; private pixHi = -1;
-  private rwK = 0; // pixel index within the current RAMWR
+  private pixHi = -1;
+  private mc = 0; private mr = 0; // memory address pointer within the active CASET/RASET window
   private madctl = 0x58;
 
   // engine source used to bundle legacy games. Set via setEngineScript() if you
@@ -336,7 +336,7 @@ export class SprigRp2040 {
       const dc = this.mcu.gpio[DISPLAY_PINS.DC].outputValue;
       const b = value & 0xff;
       if (dc) this.onData(b);
-      else { this.curCmd = b; this.args.length = 0; if (b === 0x2c) { this.rwK = 0; this.pixHi = -1; } }
+      else { this.curCmd = b; this.args.length = 0; if (b === 0x2c) { this.mc = this.cs; this.mr = this.rs; this.pixHi = -1; } }
       this.mcu.spi[0].completeTransmit(0);
     };
   }
@@ -354,15 +354,18 @@ export class SprigRp2040 {
     else if (c === 0x2a) { this.args.push(b); if (this.args.length === 4) { this.cs = (this.args[0] << 8) | this.args[1]; this.ce = (this.args[2] << 8) | this.args[3]; } }
     else if (c === 0x2b) { this.args.push(b); if (this.args.length === 4) { this.rs = (this.args[0] << 8) | this.args[1]; this.re = (this.args[2] << 8) | this.args[3]; } }
     else if (c === 0x2c) {
-      if (this.pixHi < 0) this.pixHi = b;
-      else {
-        const color = this.pixHi | (b << 8); // little-endian RGB565
-        this.pixHi = -1;
-        // Spade streams the full frame column-major (x outer, y inner; see
-        // base_engine.c "top to bottom, left to right"), so place by pixel index.
-        const k = this.rwK++;
-        this.plot(k >> 7, k & 127, color); // x = k/128 (0..159), y = k%128
-      }
+      if (this.pixHi < 0) { this.pixHi = b; return; }
+      const color = this.pixHi | (b << 8); // RGB565, low byte first
+      this.pixHi = -1;
+      // Place into the active CASET/RASET window. The ST7735 address pointer
+      // advances column-fast, then row. MADCTL's MV bit (0x20) selects how the
+      // memory column/row map to the screen: landscape firmware (MV=1, e.g. the
+      // Rust st7735-lcd driver) writes screen-space directly, while the stock
+      // Spade firmware (MV=0) streams transposed. Honoring the window is what
+      // makes set_pixel / partial writes land where the firmware intends.
+      if (this.madctl & 0x20) this.plot(this.mc, this.mr, color);
+      else this.plot(this.mr, this.mc, color);
+      if (++this.mc > this.ce) { this.mc = this.cs; this.mr++; }
     }
   }
 
@@ -416,7 +419,7 @@ export class SprigRp2040 {
     if (!this.uf2) throw new Error('loadFirmware() first');
     this.fb.fill(0);
     this.curCmd = -1; this.args.length = 0;
-    this.px = 0; this.py = 0; this.pixHi = -1; this.madctl = 0x58;
+    this.mc = 0; this.mr = 0; this.pixHi = -1; this.madctl = 0x58;
     this.rxQueue.length = 0; this.launchSeq = 0;
     // rp2040js has no public soft-reset; rebuild flash + PC.
     this.loadFirmware(this.uf2);
