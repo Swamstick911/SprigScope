@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "rm -rf node_modules apps/*/node_modules packages/*/node_modules && npm ci --include=dev --include=optional --include=prod",
+  "installCommand": "rm -rf node_modules apps/*/node_modules packages/*/node_modules && NODE_ENV=development npm_config_production=false npm_config_only= npm_config_omit= npm install --no-audit; echo DIAG_NODE_ENV=$NODE_ENV; echo DIAG_PROD=$(npm config get production); echo DIAG_OMIT=$(npm config get omit); echo DIAG_ONLY=$(npm config get only); echo DIAG_THREE=$([ -d node_modules/three ] && echo YES || echo NO); echo DIAG_COUNT=$(ls node_modules | wc -l)",
   "buildCommand": "npm run build -w @sprigscope/web",
   "outputDirectory": "apps/web/dist"
 }
