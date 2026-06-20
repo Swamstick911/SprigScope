@@ -2,6 +2,7 @@ import './styles.css';
 import { EngineBackend, BUTTONS, type Button, type Framebuffer } from '@sprigscope/core';
 import { mountVirtualSprig3D } from './virtual-sprig-3d';
 import { DEMO_GAMES } from './games';
+import { playTune, unlockAudioOnGesture, setMuted, isMuted } from './tune-player';
 
 const GH_URL = 'https://github.com/Swamstick911/SprigScope';
 
@@ -30,6 +31,8 @@ app.appendChild(layout);
 // ---------------- 3D stage ----------------
 const vs = mountVirtualSprig3D(stageWrap);
 const device = new EngineBackend();
+device.setTunePlayer(playTune);
+unlockAudioOnGesture();
 
 const statusEl = el('div', 'status');
 stageWrap.appendChild(statusEl);
@@ -135,9 +138,15 @@ panel.appendChild(fwCard);
 const deviceCard = el('section', 'card');
 deviceCard.innerHTML = '<h2>Device</h2>';
 const actions = el('div', 'row');
+const soundBtn = mkBtn('🔊 Sound', () => {
+  const m = !isMuted();
+  setMuted(m);
+  soundBtn.textContent = m ? '🔇 Muted' : '🔊 Sound';
+});
 actions.append(
   mkBtn('Reset', () => { if (mode === 'engine') device.reset(); else chipWorker?.postMessage({ type: 'reset' }); status('Reset'); }),
   mkBtn('Screenshot', () => { const a = document.createElement('a'); a.download = 'sprig.png'; a.href = vs.screenshot(); a.click(); }),
+  soundBtn,
 );
 deviceCard.appendChild(actions);
 const km = el('div', 'keymap');
