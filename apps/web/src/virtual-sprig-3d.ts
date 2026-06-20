@@ -81,6 +81,21 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
   let userInteracted = false;
   controls.addEventListener('start', () => { userInteracted = true; });
 
+  // Fit the model within the viewport on whichever axis is tighter, so the wide
+  // device still fills a tall/narrow phone screen. Recomputed on resize.
+  let modelRadius = 0;
+  const frameCamera = (): void => {
+    if (!modelRadius) return;
+    const vFov = (camera.fov * Math.PI) / 180;
+    const hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
+    const dist = (modelRadius / Math.sin(Math.min(vFov, hFov) / 2)) * 1.05;
+    camera.position.set(0, 0, dist);
+    controls.target.set(0, 0, 0);
+    controls.minDistance = dist * 0.5;
+    controls.maxDistance = dist * 1.9;
+    controls.update();
+  };
+
   // Per-button meshes (model nodes are named W A S D I J K L) + original scales for press feedback.
   const btnNodes = new Map<Button, THREE.Object3D>();
   const btnScale = new Map<Button, number>();
@@ -101,13 +116,8 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
       const box = new THREE.Box3().setFromObject(model);
       const center = box.getCenter(new THREE.Vector3());
       model.position.sub(center);
-      const radius = box.getBoundingSphere(new THREE.Sphere()).radius;
-      const dist = (radius / Math.sin((camera.fov * Math.PI) / 360)) * 1.1;
-      camera.position.set(0, 0, dist);
-      controls.target.set(0, 0, 0);
-      controls.minDistance = dist * 0.55;
-      controls.maxDistance = dist * 1.8;
-      controls.update();
+      modelRadius = box.getBoundingSphere(new THREE.Sphere()).radius;
+      frameCamera();
 
       // Screen: the 'Screen' node's child with material 'Glow Glass'.
       const screen = model.getObjectByName('Screen');
@@ -171,6 +181,7 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
     renderer.setSize(w, h);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    if (!userInteracted) frameCamera();
   };
   window.addEventListener('resize', onResize);
 
