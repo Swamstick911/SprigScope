@@ -3,7 +3,7 @@
 A virtual [Sprig](https://sprig.hackclub.com/) on your computer — run and see Sprig games
 without the hardware, and let an AI play them too.
 
-**Live demo:** https://sprigscope.vercel.app/
+**Live demo:** https://sprig-scope-mcp.vercel.app/
 
 Sprig is Hack Club's open-source handheld game console (a Raspberry Pi Pico driving a
 160×128 screen with two button pads). SprigScope reproduces it on the desktop:
