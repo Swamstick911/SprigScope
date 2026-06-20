@@ -22,12 +22,17 @@ wwwwwwwwww\`);
 const goals = getAll('g').length;
 const hud = (m) => { clearText(); addText(m, { x: 0, y: 0, color: color\`4\` }); };
 hud('Push crates onto the rings');
-const move = (dx, dy) => { const p = getFirst('p'); p.x += dx; p.y += dy; };
+const move = (dx, dy) => { const p = getFirst('p'); p.x += dx; p.y += dy; playTune([[45, 'sine', 60, 45]]); };
 onInput('w', () => move(0, -1)); onInput('s', () => move(0, 1));
 onInput('a', () => move(-1, 0)); onInput('d', () => move(1, 0));
 onInput('i', () => move(0, -1)); onInput('k', () => move(0, 1));
 onInput('j', () => move(-1, 0)); onInput('l', () => move(1, 0));
-afterInput(() => { if (tilesWith('c', 'g').length === goals) hud('Solved! Nice.'); });
+let solved = false;
+afterInput(() => {
+  if (tilesWith('c', 'g').length !== goals) return;
+  hud('Solved! Nice.');
+  if (!solved) { solved = true; playTune([[150, 'square', 72, 150], [150, 'square', 76, 150], [220, 'square', 79, 220]]); }
+});
 `;
 
 const COLLECTOR = `
@@ -54,11 +59,16 @@ onInput('w', () => move(0, -1)); onInput('s', () => move(0, 1));
 onInput('a', () => move(-1, 0)); onInput('d', () => move(1, 0));
 onInput('i', () => move(0, -1)); onInput('k', () => move(0, 1));
 onInput('j', () => move(-1, 0)); onInput('l', () => move(1, 0));
+let cleared = false;
 afterInput(() => {
   const p = getFirst('p');
   const here = getTile(p.x, p.y).filter((s) => s.type === 'o');
-  if (here.length) { here.forEach((s) => s.remove()); got += here.length; hud(); }
-  if (got === total) { clearText(); addText('All collected!', { x: 0, y: 1, color: color\`4\` }); }
+  if (here.length) { here.forEach((s) => s.remove()); got += here.length; hud(); playTune([[90, 'square', 83, 90]]); }
+  if (got === total && !cleared) {
+    cleared = true;
+    clearText(); addText('All collected!', { x: 0, y: 1, color: color\`4\` });
+    playTune([[120, 'triangle', 72, 120], [120, 'triangle', 79, 120], [220, 'triangle', 84, 220]]);
+  }
 });
 `;
 
@@ -107,10 +117,10 @@ const tick = () => {
   dir = next;
   const nx = snake[0].x + dir.x, ny = snake[0].y + dir.y;
   if (nx < 1 || ny < 1 || nx >= W - 1 || ny >= H - 1 || snake.slice(0, -1).some((s) => s.x === nx && s.y === ny)) {
-    dead = true; hud(); return;
+    dead = true; hud(); playTune([[200, 'sawtooth', 45, 200]]); return;
   }
   snake.unshift({ x: nx, y: ny });
-  if (nx === fx && ny === fy) { score++; const f = free(); fx = f.x; fy = f.y; } else { snake.pop(); }
+  if (nx === fx && ny === fy) { score++; playTune([[70, 'square', 81, 70]]); const f = free(); fx = f.x; fy = f.y; } else { snake.pop(); }
   draw(); hud();
 };
 draw(); hud();
@@ -141,7 +151,7 @@ const tick = () => {
   if (dead) return;
   getAll('o').forEach((o) => { if (o.y + 1 >= H - 1) o.remove(); else o.y += 1; });
   const p = getFirst('p');
-  if (getTile(p.x, p.y).some((s) => s.type === 'o')) { dead = true; hud(); return; }
+  if (getTile(p.x, p.y).some((s) => s.type === 'o')) { dead = true; hud(); playTune([[260, 'sawtooth', 43, 260]]); return; }
   if (Math.random() < 0.7) { const x = 1 + Math.floor(Math.random() * (W - 2)); addSprite(x, 1, 'o'); }
   score++; hud();
 };
@@ -166,12 +176,18 @@ wwwwwww.gw
 wwwwwwwwww\`);
 const hud = (m) => { clearText(); addText(m, { x: 0, y: 0, color: color\`7\` }); };
 hud('Find the exit');
-const move = (dx, dy) => { const p = getFirst('p'); p.x += dx; p.y += dy; };
+const move = (dx, dy) => { const p = getFirst('p'); p.x += dx; p.y += dy; playTune([[45, 'sine', 62, 45]]); };
 onInput('w', () => move(0, -1)); onInput('s', () => move(0, 1));
 onInput('a', () => move(-1, 0)); onInput('d', () => move(1, 0));
 onInput('i', () => move(0, -1)); onInput('k', () => move(0, 1));
 onInput('j', () => move(-1, 0)); onInput('l', () => move(1, 0));
-afterInput(() => { const p = getFirst('p'); if (getTile(p.x, p.y).some((s) => s.type === 'g')) hud('You escaped!'); });
+let escaped = false;
+afterInput(() => {
+  const p = getFirst('p');
+  if (!getTile(p.x, p.y).some((s) => s.type === 'g')) return;
+  hud('You escaped!');
+  if (!escaped) { escaped = true; playTune([[150, 'square', 72, 150], [150, 'square', 79, 150], [220, 'square', 84, 220]]); }
+});
 `;
 
 export const DEMO_GAMES: DemoGame[] = [

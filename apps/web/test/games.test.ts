@@ -18,4 +18,15 @@ describe('demo games', () => {
       for (const b of BUTTONS) expect(() => dev.pressButton(b)).not.toThrow();
     });
   }
+
+  it('sends sound effects to the host tune player on input', () => {
+    const dev = new EngineBackend();
+    const tunes: unknown[] = [];
+    dev.setTunePlayer((tune) => { tunes.push(tune); return { end() {}, isPlaying: () => false }; });
+    dev.loadGame(DEMO_GAMES[0].source, DEMO_GAMES[0].name); // Sokoban beeps on every move
+
+    dev.pressButton('d');
+    expect(tunes.length).toBeGreaterThan(0);
+    expect(Array.isArray(tunes[0])).toBe(true); // a Sprig tune is an array of note-sets
+  });
 });
