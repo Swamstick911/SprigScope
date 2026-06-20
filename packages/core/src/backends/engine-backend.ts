@@ -9,16 +9,38 @@ import { renderTextOverlay, type TextElement } from '../render/text';
 
 type Engine = ReturnType<typeof imageDataEngine>;
 
+/** Handle returned by a tune player, matching the sprig engine's playTune() contract. */
+export interface TuneHandle {
+  end(): void;
+  isPlaying(): boolean;
+}
+
+/** A host-supplied player for game audio. The browser wires this to Web Audio; on
+ *  Node (the MCP server) it's left unset and tunes are silently dropped. */
+export type TunePlayer = (tune: unknown, repeats: number) => TuneHandle;
+
+const SILENT: TuneHandle = { end() {}, isPlaying: () => false };
+
 export class EngineBackend implements SprigDevice {
   private game: Engine | null = null;
   private source = '';
   private title?: string;
+  private tunePlayer: TunePlayer | null = null;
   private readonly listeners = new Set<(fb: Framebuffer) => void>();
+
+  /** Route the running game's playTune() calls to a host audio player. */
+  setTunePlayer(player: TunePlayer | null): void {
+    this.tunePlayer = player;
+  }
 
   loadGame(source: string, title?: string): void {
     this.source = source;
     this.title = title;
     const game = imageDataEngine();
+    // The headless engine stubs playTune to a no-op; route it to the host player
+    // (if any) so the game can actually make sound.
+    game.api.playTune = ((tune: unknown, repeats = 1) =>
+      this.tunePlayer ? this.tunePlayer(tune, repeats) : SILENT) as typeof game.api.playTune;
     try {
       const fn = new Function(...Object.keys(game.api), source);
       fn(...Object.values(game.api));
