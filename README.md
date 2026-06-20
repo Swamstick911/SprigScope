@@ -3,7 +3,7 @@
 A virtual [Sprig](https://sprig.hackclub.com/) on your computer — run and see Sprig games
 without the hardware, and let an AI play them too.
 
-**Live demo:** https://swamstick911.github.io/SprigScope/
+**Live demo:** https://sprigscope.vercel.app/
 
 Sprig is Hack Club's open-source handheld game console (a Raspberry Pi Pico driving a
 160×128 screen with two button pads). SprigScope reproduces it on the desktop:
@@ -65,10 +65,10 @@ npm test
 
 ## Deploy
 
-The web app ships to **GitHub Pages** via `.github/workflows/deploy.yml` on every push to
-`master`. To turn it on once: repo **Settings → Pages → Build and deployment → Source:
-GitHub Actions**. The workflow runs the tests, builds with the correct base path
-(`--base=/SprigScope/`), and publishes `apps/web/dist`. The result is live at the URL above.
+The web app deploys to **Vercel**. Config lives in `vercel.json` (install at the repo root,
+build the `@sprigscope/web` workspace, serve `apps/web/dist`). To set it up once: import the
+repo at [vercel.com/new](https://vercel.com/new) — Vercel reads `vercel.json` automatically —
+or run `npx vercel --prod` from the repo root. Vercel then redeploys on every push to `master`.
 
 ## Credits & license
 
