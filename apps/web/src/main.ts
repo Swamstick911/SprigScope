@@ -149,8 +149,11 @@ actions.append(
   soundBtn,
 );
 deviceCard.appendChild(actions);
+const hint = el('p', 'keymap-hint');
+hint.textContent = 'Tap the pads — or use your keyboard';
+hint.style.marginTop = '14px';
+deviceCard.appendChild(hint);
 const km = el('div', 'keymap');
-km.style.marginTop = '14px';
 km.append(pad('w', 'a', 's', 'd'), pad('i', 'j', 'k', 'l'));
 deviceCard.appendChild(km);
 panel.appendChild(deviceCard);
@@ -214,16 +217,41 @@ function fileLabel(label: string, accept: string, onFile: (f: File) => void): HT
   l.appendChild(inp);
   return l;
 }
-// 3×3 D-pad diagram: up/left/down/right keys around an empty center.
+// 3×3 D-pad: up/left/down/right keys around an empty center. Doubles as the
+// keyboard legend and as touch controls (the keys are live buttons).
 function pad(up: string, left: string, down: string, right: string): HTMLElement {
   const p = el('div', 'pad');
   const slots = ['', up, '', left, '', right, '', down, ''];
   for (const k of slots) {
     const c = document.createElement('div');
-    if (k) { c.className = 'key'; c.textContent = k.toUpperCase(); } else { c.className = 'key spacer'; }
+    if (k) { c.className = 'key'; c.textContent = k.toUpperCase(); bindKey(c, k as Button); }
+    else { c.className = 'key spacer'; }
     p.appendChild(c);
   }
   return p;
+}
+
+// Make an on-screen key behave like a physical button: fire on press, auto-repeat
+// while held (as a keyboard would), and release on up / leave / cancel.
+function bindKey(cell: HTMLElement, b: Button): void {
+  let holdTimer = 0;
+  let repeatTimer = 0;
+  const release = (): void => {
+    clearTimeout(holdTimer);
+    clearInterval(repeatTimer);
+    cell.classList.remove('down');
+    vs.setActive(b, false);
+  };
+  cell.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    press(b);
+    cell.classList.add('down');
+    vs.setActive(b, true);
+    holdTimer = window.setTimeout(() => { repeatTimer = window.setInterval(() => press(b), 120); }, 300);
+  });
+  cell.addEventListener('pointerup', release);
+  cell.addEventListener('pointercancel', release);
+  cell.addEventListener('pointerleave', release);
 }
 function escapeHtml(s: string): string {
   const d = document.createElement('div');

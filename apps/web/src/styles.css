@@ -106,14 +106,19 @@ body {
 .row > * { flex: 1; }
 .stack { display: flex; flex-direction: column; gap: 8px; }
 
-/* keymap */
+/* keymap / touch controls */
 .keymap { display: flex; justify-content: space-around; align-items: center; gap: 14px; }
-.pad { display: grid; grid-template-columns: repeat(3, 22px); grid-template-rows: repeat(3, 22px); gap: 3px; }
+.keymap-hint { color: var(--muted); font-size: 12px; text-align: center; margin: 0 0 10px; }
+.pad { display: grid; grid-template-columns: repeat(3, 30px); grid-template-rows: repeat(3, 30px); gap: 4px; }
 .key {
   display: grid; place-items: center; background: var(--panel-2); border: 1px solid var(--line);
-  border-radius: 6px; font-size: 11px; color: var(--muted); font-weight: 700;
+  border-radius: 7px; font-size: 12px; color: var(--muted); font-weight: 700;
+  cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none;
+  transition: background 0.08s, color 0.08s, border-color 0.08s, transform 0.05s;
 }
-.key.spacer { background: transparent; border: none; }
+.key:hover { color: var(--text); border-color: var(--green-dim); }
+.key.down { background: var(--green); border-color: var(--green); color: #04210f; transform: scale(0.9); }
+.key.spacer { background: transparent; border: none; cursor: default; }
 
 /* footer */
 .foot { border-top: 1px solid var(--line); padding: 16px 22px; color: var(--muted); font-size: 12.5px; text-align: center; }
@@ -126,4 +131,8 @@ body {
   .panel { flex: none; }
   .stage-wrap { min-height: 380px; }
   .brand .tag { display: none; }
+  /* roomier touch targets for the on-screen controls; wrap if too narrow */
+  .keymap { gap: 16px; flex-wrap: wrap; }
+  .pad { grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(3, 44px); gap: 5px; }
+  .key { font-size: 15px; }
 }
