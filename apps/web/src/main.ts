@@ -11,7 +11,7 @@ const app = document.querySelector<HTMLDivElement>('#app')!;
 // ---------------- header ----------------
 const topbar = el('header', 'topbar');
 topbar.innerHTML =
-  '<div class="brand"><span class="logo">Sprig<b>Scope</b></span><span class="tag">a virtual Sprig in your browser</span></div>';
+  '<div class="brand"><span class="logo">Sprig<b>Scope</b></span><span class="tag">virtual Sprig · RP2040 emulator</span></div>';
 const gh = document.createElement('a');
 gh.className = 'gh';
 gh.href = GH_URL;
