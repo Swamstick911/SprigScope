@@ -5,7 +5,8 @@
   "workspaces": ["packages/*", "apps/*"],
   "scripts": {
     "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "deploy": "bash scripts/deploy-web.sh"
   },
   "overrides": {
     "vite": "^6.0.0"

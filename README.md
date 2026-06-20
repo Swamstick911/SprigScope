@@ -65,10 +65,14 @@ npm test
 
 ## Deploy
 
-The web app deploys to **Vercel**. Config lives in `vercel.json` (install at the repo root,
-build the `@sprigscope/web` workspace, serve `apps/web/dist`). To set it up once: import the
-repo at [vercel.com/new](https://vercel.com/new) — Vercel reads `vercel.json` automatically —
-or run `npx vercel --prod` from the repo root. Vercel then redeploys on every push to `master`.
+The web app is a static SPA hosted on **Vercel**. It's built locally and shipped as
+prebuilt output, which keeps the deploy independent of the build server:
+
+```bash
+npm run deploy   # builds @sprigscope/web, then `vercel deploy --prebuilt --prod`
+```
+
+First-time setup: `npm i -g vercel`, `vercel login`, then `vercel link` to the project.
 
 ## Credits & license
 
