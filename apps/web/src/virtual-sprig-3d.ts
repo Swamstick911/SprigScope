@@ -135,13 +135,18 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
       modelRadius = box.getBoundingSphere(new THREE.Sphere()).radius;
       frameCamera();
 
-      // Screen: the 'Screen' node's child with material 'Glow Glass'.
+      // The 'Screen' node is one mesh split into layered primitives. The face the
+      // player looks at is 'Material.004'; 'Glow Glass' is a glow plane on the back,
+      // so texture the front face and avoid the glow plane.
       const screen = model.getObjectByName('Screen');
-      const found = screen?.children.find(
-        (c) => (c as THREE.Mesh).material && ((c as THREE.Mesh).material as THREE.Material).name === 'Glow Glass',
-      ) as THREE.Mesh | undefined;
+      const parts = (screen ? screen.children : []) as THREE.Mesh[];
+      const matName = (m: THREE.Mesh) => ((m.material as THREE.Material | undefined)?.name ?? '');
+      const found =
+        parts.find((c) => matName(c) === 'Material.004') ??
+        parts.find((c) => matName(c) === 'Glow Glass') ??
+        parts[0];
       if (found) {
-        found.material = new THREE.MeshBasicMaterial({ map: screenTex, side: THREE.BackSide });
+        found.material = new THREE.MeshBasicMaterial({ map: screenTex, side: THREE.DoubleSide });
         glass = found;
       }
 
