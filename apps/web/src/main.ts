@@ -121,7 +121,7 @@ function bootApp(vs: VirtualSprig3D): void {
   // ---------------- panel: firmware ----------------
   const fwCard = el('section', 'card');
   fwCard.innerHTML =
-    '<h2>Run firmware</h2><p class="muted">Boot any RP2040 <code>.uf2</code> — the real binary runs in an emulator on a background thread.</p>';
+    '<h2>Run firmware</h2><p class="muted">Boot any RP2040 <code>.uf2</code> file. The real binary runs in an emulator on a background thread.</p>';
   const bootBtn = document.createElement('button');
   bootBtn.className = 'btn primary';
   bootBtn.textContent = 'Boot stock OS';
@@ -154,7 +154,7 @@ function bootApp(vs: VirtualSprig3D): void {
   );
   deviceCard.appendChild(actions);
   const hint = el('p', 'keymap-hint');
-  hint.textContent = 'Tap the pads — or use your keyboard';
+  hint.textContent = 'Tap the pads, or use your keyboard';
   hint.style.marginTop = '14px';
   deviceCard.appendChild(hint);
   const km = el('div', 'keymap');
@@ -162,11 +162,28 @@ function bootApp(vs: VirtualSprig3D): void {
   deviceCard.appendChild(km);
   panel.appendChild(deviceCard);
 
+  // ---------------- about / human content ----------------
+  const about = el('section', 'about');
+  about.innerHTML =
+    '<div>' +
+    '<h2>so, what is this?</h2>' +
+    "<p>I love the Hack Club Sprig, the tiny handheld you solder together yourself. I did not always have one on my desk though, so I rebuilt the whole thing in a browser tab. it boots the real RP2040 firmware, runs actual Sprig games, and draws the true 160 by 128 screen, pixel for pixel.</p>" +
+    '<p>poke the buttons with a mouse, tap them on a phone, or use your keyboard. spin the board around and peek at the back. drop in your own firmware and see if it runs. no cable, no cartridge, nothing to plug in.</p>' +
+    '<p class="sig">made with way too much coffee and a soft spot for tiny computers.</p>' +
+    '</div>' +
+    '<div class="try"><h3>things to try</h3><ul>' +
+    '<li>play one of the five little games</li>' +
+    '<li>press boot stock OS and watch real firmware wake up</li>' +
+    '<li>drag your own .uf2 onto the page</li>' +
+    '<li>flip the board over and find the Pico</li>' +
+    '</ul></div>';
+  app.appendChild(about);
+
   // ---------------- footer ----------------
   const foot = el('footer', 'foot');
   foot.innerHTML =
-    `Built on Hack Club's open-source <a href="https://sprig.hackclub.com" target="_blank" rel="noopener">Sprig</a> · ` +
-    `3D &amp; emulation via three.js + rp2040js · MIT licensed · ` +
+    `Built on Hack Club's open source <a href="https://sprig.hackclub.com" target="_blank" rel="noopener">Sprig</a> · ` +
+    `3D and emulation via three.js and rp2040js · MIT licensed · ` +
     `<a href="${GH_URL}" target="_blank" rel="noopener">source</a>`;
   app.appendChild(foot);
 
