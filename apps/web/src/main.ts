@@ -5,6 +5,7 @@ import { mountLanding } from './landing';
 import { DEMO_GAMES } from './games';
 import { playTune, unlockAudioOnGesture, setMuted, isMuted } from './tune-player';
 import { connectSprig, serialSupported, type MirrorHandle } from './serial-mirror';
+import { chooseMove, type BotConfig } from './autoplay';
 
 const GH_URL = 'https://github.com/Swamstick911/SprigScope';
 
@@ -58,6 +59,8 @@ function bootApp(vs: VirtualSprig3D): void {
   let latestChipFrame: Framebuffer | null = null;
   let latestMirrorFrame: Framebuffer | null = null;
   let mirror: MirrorHandle | null = null;
+  let currentBot: BotConfig | null = null;
+  let autoTimer = 0;
 
   function ensureWorker(): Worker {
     if (!chipWorker) {
@@ -75,6 +78,7 @@ function bootApp(vs: VirtualSprig3D): void {
     return chipWorker;
   }
   function bootFirmware(bytes: ArrayBuffer, label: string): void {
+    stopAutoplay();
     mode = 'chip';
     latestChipFrame = null;
     clearActiveGame();
@@ -114,6 +118,7 @@ function bootApp(vs: VirtualSprig3D): void {
       mode = 'mirror';
       latestMirrorFrame = null;
       clearActiveGame();
+      stopAutoplay();
       chipWorker?.postMessage({ type: 'stop' });
       mirrorBtn.textContent = 'Disconnect Sprig';
     } catch (e) {
@@ -138,19 +143,43 @@ function bootApp(vs: VirtualSprig3D): void {
   gamesCard.appendChild(gallery);
   gamesCard.appendChild(
     fileLabel('Load your .js…', '.js,.txt', async (f) => {
-      try { toEngine(); clearActiveGame(); device.loadGame(await f.text(), f.name); status(`Loaded ${f.name}`); }
+      try { stopAutoplay(); toEngine(); clearActiveGame(); device.loadGame(await f.text(), f.name); currentBot = null; status(`Loaded ${f.name}`); }
       catch (e) { status((e as Error).message, true); }
     }),
   );
+  const autoBtn = mkBtn('Watch it play', () => toggleAutoplay());
+  autoBtn.style.marginTop = '8px';
+  gamesCard.appendChild(autoBtn);
   panel.appendChild(gamesCard);
 
   function clearActiveGame(): void { gameBtns.forEach((b) => b.classList.remove('active')); }
   function loadGame(i: number): void {
+    stopAutoplay();
     toEngine();
     device.loadGame(DEMO_GAMES[i].source, DEMO_GAMES[i].name);
+    currentBot = DEMO_GAMES[i].bot ?? null;
     clearActiveGame();
     gameBtns[i].classList.add('active');
     status(DEMO_GAMES[i].name);
+  }
+
+  // The bot: read the game state a few times a second and press a button.
+  function stopAutoplay(): void {
+    if (autoTimer) { clearInterval(autoTimer); autoTimer = 0; }
+    autoBtn.textContent = 'Watch it play';
+  }
+  function toggleAutoplay(): void {
+    if (autoTimer) { stopAutoplay(); status(device.getStatus().title ?? 'Paused'); return; }
+    if (mode !== 'engine' || !currentBot) { status('Load one of the games to watch it play.', true); return; }
+    autoBtn.textContent = 'Stop watching';
+    status('the bot is playing by itself');
+    autoTimer = window.setInterval(() => {
+      if (mode !== 'engine' || !currentBot) { stopAutoplay(); return; }
+      const snapshot = device.getState();
+      if (!snapshot) return;
+      const move = chooseMove(snapshot, currentBot);
+      if (move) press(move);
+    }, 240);
   }
 
   // ---------------- panel: firmware ----------------

@@ -1,6 +1,7 @@
 import { PLAYER, WALL, CRATE, GOAL, COIN, BODY, FOOD, ROCK } from './sprites';
+import type { BotConfig } from './autoplay';
 
-export interface DemoGame { name: string; source: string; }
+export interface DemoGame { name: string; source: string; bot?: BotConfig; }
 
 const SOKOBAN = `
 const player = bitmap\`${PLAYER}\`;
@@ -191,9 +192,9 @@ afterInput(() => {
 `;
 
 export const DEMO_GAMES: DemoGame[] = [
-  { name: 'Sokoban', source: SOKOBAN },
-  { name: 'Collector', source: COLLECTOR },
-  { name: 'Snake', source: SNAKE },
-  { name: 'Dodge', source: DODGE },
-  { name: 'Maze', source: MAZE },
+  { name: 'Sokoban', source: SOKOBAN, bot: { player: 'p', seek: ['c'], walls: ['w'] } },
+  { name: 'Collector', source: COLLECTOR, bot: { player: 'p', seek: ['o'], walls: ['w'] } },
+  { name: 'Snake', source: SNAKE, bot: { player: 'h', seek: ['f'], walls: ['w'], avoid: ['b'] } },
+  { name: 'Dodge', source: DODGE, bot: { player: 'p', avoid: ['o'], walls: ['w'], moves: ['a', 'd'] } },
+  { name: 'Maze', source: MAZE, bot: { player: 'p', seek: ['g'], walls: ['w'] } },
 ];
