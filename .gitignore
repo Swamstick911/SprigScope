@@ -29,3 +29,6 @@ coverage/
 .playwright-mcp/
 
 .vercel
+
+# Docs (kept local, not tracked)
+docs/

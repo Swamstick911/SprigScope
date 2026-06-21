@@ -161,6 +161,7 @@ function bootApp(vs: VirtualSprig3D): void {
     clearActiveGame();
     gameBtns[i].classList.add('active');
     status(DEMO_GAMES[i].name);
+    store.set('spr-game', String(i));
   }
 
   // The bot: read the game state a few times a second and press a button.
@@ -215,7 +216,9 @@ function bootApp(vs: VirtualSprig3D): void {
     const m = !isMuted();
     setMuted(m);
     soundBtn.textContent = m ? 'Muted' : 'Sound';
+    store.set('spr-muted', String(m));
   });
+  if (store.get('spr-muted') === 'true') { setMuted(true); soundBtn.textContent = 'Muted'; }
   actions.append(
     mkBtn('Reset', () => { if (mode === 'engine') device.reset(); else chipWorker?.postMessage({ type: 'reset' }); status('Reset'); }),
     mkBtn('Screenshot', () => { const a = document.createElement('a'); a.download = 'sprig.png'; a.href = vs.screenshot(); a.click(); }),
@@ -281,7 +284,8 @@ function bootApp(vs: VirtualSprig3D): void {
     requestAnimationFrame(frame);
   }
 
-  loadGame(0);
+  const saved = Number(store.get('spr-game'));
+  loadGame(Number.isInteger(saved) && saved >= 0 && saved < DEMO_GAMES.length ? saved : 0);
   requestAnimationFrame(frame);
 
   // Make an on-screen key behave like a physical button: fire on press, auto-repeat
@@ -351,3 +355,9 @@ function escapeHtml(s: string): string {
   d.textContent = s;
   return d.innerHTML;
 }
+
+// small localStorage wrapper that won't throw in private mode
+const store = {
+  get: (k: string): string | null => { try { return localStorage.getItem(k); } catch { return null; } },
+  set: (k: string, v: string): void => { try { localStorage.setItem(k, v); } catch { /* ignore */ } },
+};
