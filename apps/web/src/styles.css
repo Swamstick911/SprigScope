@@ -239,7 +239,7 @@ a { color: inherit; }
   border-bottom: 1px dashed var(--line-2);
 }
 .try li:last-child { border-bottom: none; }
-.try li::before { content: '✷'; position: absolute; left: 4px; top: 9px; color: var(--gold); }
+.try li::before { content: ''; position: absolute; left: 4px; top: 17px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
 
 /* footer */
 .foot {

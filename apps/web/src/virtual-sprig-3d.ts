@@ -141,7 +141,7 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
         (c) => (c as THREE.Mesh).material && ((c as THREE.Mesh).material as THREE.Material).name === 'Glow Glass',
       ) as THREE.Mesh | undefined;
       if (found) {
-        found.material = new THREE.MeshBasicMaterial({ map: screenTex, side: THREE.DoubleSide });
+        found.material = new THREE.MeshBasicMaterial({ map: screenTex, side: THREE.BackSide });
         glass = found;
       }
 
@@ -163,7 +163,7 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
       anchor('power', 7.5, 0.4, -3.9); // front, top-right slide switch
       anchor('usbc', 7.2, 0.4, 0.0); // front, top edge centre (micro-USB)
       anchor('rp2040', 8.7, -0.75, 0.0); // back, centre (Raspberry Pi Pico)
-      anchor('speaker', 10.0, -0.75, 2.4); // back buzzer (approx)
+      anchor('speaker', 8.0, -0.75, 2.4); // back buzzer (approx), upper area
 
       loaded = true;
       readyCbs.forEach((cb) => cb());

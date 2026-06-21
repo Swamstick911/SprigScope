@@ -142,10 +142,10 @@ function bootApp(vs: VirtualSprig3D): void {
   const deviceCard = el('section', 'card');
   deviceCard.innerHTML = '<h2>Device</h2>';
   const actions = el('div', 'row');
-  const soundBtn = mkBtn('🔊 Sound', () => {
+  const soundBtn = mkBtn('Sound', () => {
     const m = !isMuted();
     setMuted(m);
-    soundBtn.textContent = m ? '🔇 Muted' : '🔊 Sound';
+    soundBtn.textContent = m ? 'Muted' : 'Sound';
   });
   actions.append(
     mkBtn('Reset', () => { if (mode === 'engine') device.reset(); else chipWorker?.postMessage({ type: 'reset' }); status('Reset'); }),
