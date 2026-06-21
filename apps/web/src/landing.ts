@@ -1,6 +1,7 @@
 import { EngineBackend } from '@sprigscope/core';
 import type { VirtualSprig3D } from './virtual-sprig-3d';
 import { DEMO_GAMES } from './games';
+import { chooseMove } from './autoplay';
 
 // A maker's hand-annotated intro: the real Sprig sits on warm graph paper while
 // handwritten callouts point at its parts and follow it as it turns. "Boot it up"
@@ -49,9 +50,14 @@ export function mountLanding(opts: {
   const vs = opts.mount3d(holder);
   vs.setFraming(1.4); // leave room around the device for the copy + callouts
 
-  // light up the device's screen with a real game so the hero isn't a dead panel
+  // Light up the hero with a game the bot plays on its own, so the first thing a
+  // visitor sees is an AI actually playing the Sprig. Collector is input-driven
+  // (no timers to leak on restart) and the coin grabbing reads clearly.
+  const demoGame = DEMO_GAMES[1];
   const demo = new EngineBackend();
-  demo.loadGame(DEMO_GAMES[0].source, DEMO_GAMES[0].name);
+  demo.loadGame(demoGame.source, demoGame.name);
+  let botFrame = 0;
+  let reloading = false;
 
   const labels = ANNOS.map((a) => {
     const el = document.createElement('div');
@@ -77,7 +83,19 @@ export function mountLanding(opts: {
   let live = true;
   const tick = (): void => {
     if (!live) return;
-    if (modelReady) vs.updateScreen(demo.getFramebuffer());
+    if (modelReady) {
+      if (!reloading && botFrame++ % 14 === 0 && demoGame.bot) {
+        const snap = demo.getState();
+        if (snap && snap.texts.some((t) => /collected/i.test(t.content))) {
+          reloading = true; // board cleared: restart shortly so it keeps playing
+          setTimeout(() => { demo.loadGame(demoGame.source, demoGame.name); reloading = false; }, 1800);
+        } else if (snap) {
+          const m = chooseMove(snap, demoGame.bot);
+          if (m) demo.pressButton(m);
+        }
+      }
+      vs.updateScreen(demo.getFramebuffer());
+    }
     vs.render();
     for (const L of labels) {
       const an = modelReady ? vs.getAnchor(L.a.node) : null;
