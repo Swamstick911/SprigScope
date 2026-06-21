@@ -4,6 +4,7 @@ import { mountVirtualSprig3D, type VirtualSprig3D } from './virtual-sprig-3d';
 import { mountLanding } from './landing';
 import { DEMO_GAMES } from './games';
 import { playTune, unlockAudioOnGesture, setMuted, isMuted } from './tune-player';
+import { connectSprig, serialSupported, type MirrorHandle } from './serial-mirror';
 
 const GH_URL = 'https://github.com/Swamstick911/SprigScope';
 
@@ -51,10 +52,12 @@ function bootApp(vs: VirtualSprig3D): void {
   // ---------------- backend mode (engine games / chip firmware) ----------------
   const device = new EngineBackend();
   device.setTunePlayer(playTune);
-  type Mode = 'engine' | 'chip';
+  type Mode = 'engine' | 'chip' | 'mirror';
   let mode: Mode = 'engine';
   let chipWorker: Worker | null = null;
   let latestChipFrame: Framebuffer | null = null;
+  let latestMirrorFrame: Framebuffer | null = null;
+  let mirror: MirrorHandle | null = null;
 
   function ensureWorker(): Worker {
     if (!chipWorker) {
@@ -84,7 +87,39 @@ function bootApp(vs: VirtualSprig3D): void {
   }
   function press(b: Button): void {
     if (mode === 'engine') device.pressButton(b);
+    else if (mode === 'mirror') mirror?.sendButton(b);
     else chipWorker?.postMessage({ type: 'press', button: b });
+  }
+
+  // Mirror a real Sprig over USB: the hardware does the WiFi, the page shows its screen.
+  async function toggleMirror(): Promise<void> {
+    if (mirror) {
+      await mirror.disconnect();
+      mirror = null;
+      mirrorBtn.textContent = 'Connect a real Sprig';
+      loadGame(0);
+      status('Sprig disconnected');
+      return;
+    }
+    if (!serialSupported()) {
+      status('Mirroring needs Chrome or Edge (WebSerial).', true);
+      return;
+    }
+    status('Pick your Sprig in the popup…');
+    try {
+      mirror = await connectSprig(
+        (rgba) => { latestMirrorFrame = { width: 160, height: 128, data: rgba }; },
+        (msg, err) => status(msg, err),
+      );
+      mode = 'mirror';
+      latestMirrorFrame = null;
+      clearActiveGame();
+      chipWorker?.postMessage({ type: 'stop' });
+      mirrorBtn.textContent = 'Disconnect Sprig';
+    } catch (e) {
+      mirror = null;
+      status((e as Error).message, true);
+    }
   }
 
   // ---------------- panel: games ----------------
@@ -136,6 +171,11 @@ function bootApp(vs: VirtualSprig3D): void {
   const uf2Label = fileLabel('Load .uf2…', '.uf2', async (f) => bootFirmware(await f.arrayBuffer(), f.name));
   uf2Label.style.marginTop = '8px';
   fwCard.appendChild(uf2Label);
+  const mirrorNote = el('p', 'muted');
+  mirrorNote.style.margin = '14px 0 8px';
+  mirrorNote.textContent = 'Got a real Sprig? Plug it in over USB and mirror its screen here.';
+  const mirrorBtn = mkBtn('Connect a real Sprig', () => { void toggleMirror(); });
+  fwCard.append(mirrorNote, mirrorBtn);
   panel.appendChild(fwCard);
 
   // ---------------- panel: device actions + keymap ----------------
@@ -206,7 +246,8 @@ function bootApp(vs: VirtualSprig3D): void {
   // ---------------- render loop ----------------
   function frame(): void {
     if (mode === 'engine') vs.updateScreen(device.getFramebuffer());
-    else if (latestChipFrame) vs.updateScreen(latestChipFrame);
+    else if (mode === 'chip' && latestChipFrame) vs.updateScreen(latestChipFrame);
+    else if (mode === 'mirror' && latestMirrorFrame) vs.updateScreen(latestMirrorFrame);
     vs.render();
     requestAnimationFrame(frame);
   }
