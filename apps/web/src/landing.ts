@@ -10,12 +10,10 @@ interface Anno { node: string; label: string; side: 'l' | 'r'; }
 
 const ANNOS: Anno[] = [
   // front of the board
-  { node: 'screen', label: 'the real 160×128 screen', side: 'l' },
   { node: 'a', label: 'move · W A S D', side: 'l' },
   { node: 'l', label: 'action · I J K L', side: 'r' },
-  { node: 'power', label: 'power switch', side: 'r' },
   { node: 'usbc', label: 'micro USB', side: 'l' },
-  // flip it over → the back
+  // flip it over for the back
   { node: 'rp2040', label: 'Raspberry Pi Pico', side: 'r' },
   { node: 'speaker', label: 'speaker', side: 'l' },
 ];

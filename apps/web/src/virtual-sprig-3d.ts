@@ -165,8 +165,7 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
         o.position.set(x, y, z);
         model.add(o);
       };
-      anchor('power', 7.5, 0.4, -3.9); // front, top-right slide switch
-      anchor('usbc', 7.2, 0.4, 0.0); // front, top edge centre (micro-USB)
+      anchor('usbc', 7.2, 0.4, 0.0); // front, top edge centre (micro USB)
       anchor('rp2040', 8.7, -0.75, 0.0); // back, centre (Raspberry Pi Pico)
       anchor('speaker', 8.0, -0.75, 2.4); // back buzzer (approx), upper area
 
