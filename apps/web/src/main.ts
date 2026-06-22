@@ -57,6 +57,7 @@ function bootApp(vs: VirtualSprig3D): void {
   let mode: Mode = 'engine';
   let chipWorker: Worker | null = null;
   let latestChipFrame: Framebuffer | null = null;
+  let wifiFw = false; // uploaded firmware needs a WiFi radio the emulator doesn't have
   let latestMirrorFrame: Framebuffer | null = null;
   let mirror: MirrorHandle | null = null;
   let currentBot: BotConfig | null = null;
@@ -69,7 +70,9 @@ function bootApp(vs: VirtualSprig3D): void {
         const m = e.data as { type: string; data?: ArrayBuffer; message?: string };
         if (m.type === 'frame' && m.data && mode === 'chip') {
           latestChipFrame = { width: 160, height: 128, data: new Uint8ClampedArray(m.data) };
-          status('Firmware running');
+          status(wifiFw
+            ? 'Running, but there is no WiFi radio in here, so it stays on "Connecting WiFi". This firmware needs a real Pico W.'
+            : 'Firmware running');
         } else if (m.type === 'error') {
           status(m.message || 'Firmware error', true);
         }
@@ -82,8 +85,11 @@ function bootApp(vs: VirtualSprig3D): void {
     mode = 'chip';
     latestChipFrame = null;
     clearActiveGame();
+    wifiFw = looksLikeWifiFirmware(bytes); // scan before transferring the buffer to the worker
     ensureWorker().postMessage({ type: 'loadFirmware', uf2: bytes }, [bytes]);
-    status(`Booting ${label}…`);
+    status(wifiFw
+      ? `Booting ${label}… heads up, this looks like Pico W WiFi firmware and the emulator has no radio.`
+      : `Booting ${label}…`);
   }
   function toEngine(): void {
     mode = 'engine';
@@ -354,6 +360,14 @@ function escapeHtml(s: string): string {
   const d = document.createElement('div');
   d.textContent = s;
   return d.innerHTML;
+}
+
+// The emulator is a bare RP2040 with no WiFi radio or network. Pico W firmware
+// (cyw43 driver + the CYW43439 blob) boots fine but parks forever on "Connecting
+// WiFi", so sniff the binary for those markers and say so instead of looking hung.
+function looksLikeWifiFirmware(buf: ArrayBuffer): boolean {
+  const text = new TextDecoder('latin1').decode(new Uint8Array(buf));
+  return /cyw43|PicoW|Connecting WiFi|43439/i.test(text);
 }
 
 // small localStorage wrapper that won't throw in private mode
