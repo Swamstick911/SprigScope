@@ -78,14 +78,35 @@ export async function connectSprig(
 
   const port = await serial.requestPort();
   await port.open({ baudRate: 115200 }); // USB CDC ignores the rate, but it's required
-  onStatus('Sprig connected, waiting for its screen…');
+  onStatus('Port open, listening for the Sprig screen…');
 
   let stopped = false;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let reader: any = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const writer: any = port.writable ? port.writable.getWriter() : null;
-  const feed = createFrameDecoder(onFrame);
+
+  // Diagnostics: a stock Sprig doesn't broadcast its framebuffer, so the decoder
+  // would just sit silent forever. Track what's actually arriving and, if no real
+  // frames show up, report exactly what the port is (or isn't) sending.
+  let bytesIn = 0;
+  let framesIn = 0;
+  const head: number[] = [];
+  const hex = (bytes: number[]): string => bytes.map((b) => b.toString(16).padStart(2, '0')).join(' ');
+  const decode = createFrameDecoder((rgba) => { framesIn++; onFrame(rgba); });
+  const feed = (v: Uint8Array): void => {
+    bytesIn += v.length;
+    for (let i = 0; i < v.length && head.length < 16; i++) head.push(v[i]);
+    decode(v);
+  };
+  setTimeout(() => {
+    if (stopped || framesIn > 0) return;
+    if (bytesIn === 0) {
+      onStatus('Port is open but silent — nothing is being sent. A stock Sprig runs games; it does not stream its screen, so there is nothing to mirror without custom firmware.', true);
+    } else {
+      onStatus(`Receiving ${bytesIn} bytes but no screen frames (data starts with ${hex(head)}). This port is not streaming the framebuffer format the mirror needs.`, true);
+    }
+  }, 3000);
 
   (async () => {
     try {
