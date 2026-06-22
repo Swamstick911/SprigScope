@@ -97,12 +97,15 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
   // Fit the model within the viewport on whichever axis is tighter, so the wide
   // device still fills a tall/narrow phone screen. Recomputed on resize.
   let modelRadius = 0;
-  let frameMargin = 1.05;
+  let boxW = 0, boxH = 0;
+  let frameMargin = 1.1;
   const frameCamera = (): void => {
     if (!modelRadius) return;
     const vFov = (camera.fov * Math.PI) / 180;
     const hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
-    const dist = (modelRadius / Math.sin(Math.min(vFov, hFov) / 2)) * frameMargin;
+    // Fit the board's actual width and height (not its bounding sphere) so the
+    // wide, flat device fills the stage instead of floating in empty space.
+    const dist = Math.max((boxH / 2) / Math.tan(vFov / 2), (boxW / 2) / Math.tan(hFov / 2)) * frameMargin;
     camera.position.set(0, 0, dist);
     controls.target.set(0, 0, 0);
     controls.minDistance = dist * 0.5;
@@ -133,6 +136,8 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
       const center = box.getCenter(new THREE.Vector3());
       model.position.sub(center);
       modelRadius = box.getBoundingSphere(new THREE.Sphere()).radius;
+      const sz = box.getSize(new THREE.Vector3());
+      boxW = sz.x; boxH = sz.y;
       frameCamera();
 
       // The 'Screen' mesh is split into layered primitives; 'Glow Glass' is the
@@ -252,7 +257,7 @@ export function mountVirtualSprig3D(parent: HTMLElement): VirtualSprig3D {
     screenshot() { renderer.render(scene, camera); return renderer.domElement.toDataURL('image/png'); },
     getAnchor,
     reparent(newParent: HTMLElement) {
-      frameMargin = 1.05; // the app stage wants the device to fill the frame
+      frameMargin = 1.1; // the app stage wants the device to fill the frame
       newParent.appendChild(container);
       onResize();
       frameCamera();

@@ -48,7 +48,7 @@ export function mountLanding(opts: {
   const loadingEl = root.querySelector('.ln-loading') as HTMLElement;
 
   const vs = opts.mount3d(holder);
-  vs.setFraming(1.4); // leave room around the device for the copy + callouts
+  vs.setFraming(1.5); // fill the right-hand area the device is given (copy lives to its left)
 
   // Light up the hero with a game the bot plays on its own, so the first thing a
   // visitor sees is an AI actually playing the Sprig. Collector is input-driven
@@ -97,11 +97,16 @@ export function mountLanding(opts: {
       vs.updateScreen(demo.getFramebuffer());
     }
     vs.render();
+    // Anchors come back in the 3D holder's own pixels; the labels + leader lines
+    // live in the full-page overlay, so shift everything by the holder's offset
+    // (the device sits in a right-hand column on desktop).
+    const hr = holder.getBoundingClientRect();
     for (const L of labels) {
       const an = modelReady ? vs.getAnchor(L.a.node) : null;
       if (!an) { L.el.style.opacity = '0'; L.path.style.opacity = '0'; L.dot.style.opacity = '0'; continue; }
+      const ax = hr.left + an.x, ay = hr.top + an.y;
       const off = L.a.side === 'l' ? -160 : 160;
-      const lx = an.x + off, ly = an.y;
+      const lx = ax + off, ly = ay;
       L.el.style.transform = `translate(${lx}px, ${ly - 14}px) rotate(${L.a.side === 'l' ? -2 : 2}deg)`;
       const op = an.front ? 1 : 0.1;
       L.el.style.opacity = String(op);
@@ -110,11 +115,11 @@ export function mountLanding(opts: {
       // bow the leader line a little so it reads as hand-drawn
       const ex = L.a.side === 'l' ? lx + L.el.offsetWidth + 6 : lx - 6;
       const ey = ly - 6;
-      const cx = (ex + an.x) / 2;
-      const cy = (ey + an.y) / 2 - 22;
-      L.path.setAttribute('d', `M ${ex} ${ey} Q ${cx} ${cy} ${an.x} ${an.y}`);
-      L.dot.setAttribute('cx', String(an.x));
-      L.dot.setAttribute('cy', String(an.y));
+      const cx = (ex + ax) / 2;
+      const cy = (ey + ay) / 2 - 22;
+      L.path.setAttribute('d', `M ${ex} ${ey} Q ${cx} ${cy} ${ax} ${ay}`);
+      L.dot.setAttribute('cx', String(ax));
+      L.dot.setAttribute('cy', String(ay));
     }
     requestAnimationFrame(tick);
   };
