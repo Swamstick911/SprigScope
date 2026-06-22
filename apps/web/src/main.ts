@@ -203,7 +203,7 @@ function bootApp(vs: VirtualSprig3D): void {
   fwCard.appendChild(uf2Label);
   const mirrorNote = el('p', 'muted');
   mirrorNote.style.margin = '14px 0 8px';
-  mirrorNote.textContent = 'Got a real Sprig? Plug it in over USB and mirror its screen here.';
+  mirrorNote.textContent = 'Got a Sprig running streaming firmware? Plug it in over USB to mirror its screen here. A stock Sprig plays games but does not broadcast its screen, so it shows nothing.';
   const mirrorBtn = mkBtn('Connect a real Sprig', () => { void toggleMirror(); });
   fwCard.append(mirrorNote, mirrorBtn);
   panel.appendChild(fwCard);
