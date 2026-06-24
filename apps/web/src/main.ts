@@ -5,6 +5,10 @@ import { mountLanding } from './landing';
 import { DEMO_GAMES } from './games';
 import { playTune, unlockAudioOnGesture, setMuted, isMuted } from './tune-player';
 import { connectSprig, serialSupported, type MirrorHandle } from './serial-mirror';
+import {
+  cameraMirrorAvailable, startCamera, extractFrame, makeScratch, DEFAULT_QUAD,
+  type Quad, type CameraHandle,
+} from './camera-mirror';
 import { chooseMove, type BotConfig } from './autoplay';
 
 const GH_URL = 'https://github.com/Swamstick911/SprigScope';
@@ -60,6 +64,10 @@ function bootApp(vs: VirtualSprig3D): void {
   let wifiFw = false; // uploaded firmware needs a WiFi radio the emulator doesn't have
   let latestMirrorFrame: Framebuffer | null = null;
   let mirror: MirrorHandle | null = null;
+  let cam: CameraHandle | null = null;
+  let camRaf = 0;
+  const camScratch = makeScratch();
+  let camQuad: Quad = loadCamQuad();
   let currentBot: BotConfig | null = null;
   let autoTimer = 0;
 
@@ -82,6 +90,7 @@ function bootApp(vs: VirtualSprig3D): void {
   }
   function bootFirmware(bytes: ArrayBuffer, label: string): void {
     stopAutoplay();
+    exitCameraMode();
     mode = 'chip';
     latestChipFrame = null;
     clearActiveGame();
@@ -161,6 +170,7 @@ function bootApp(vs: VirtualSprig3D): void {
   function clearActiveGame(): void { gameBtns.forEach((b) => b.classList.remove('active')); }
   function loadGame(i: number): void {
     stopAutoplay();
+    exitCameraMode();
     toEngine();
     device.loadGame(DEMO_GAMES[i].source, DEMO_GAMES[i].name);
     currentBot = DEMO_GAMES[i].bot ?? null;
@@ -212,7 +222,129 @@ function bootApp(vs: VirtualSprig3D): void {
   mirrorNote.textContent = 'Got a Sprig running streaming firmware? Plug it in over USB to mirror its screen here. A stock Sprig plays games but does not broadcast its screen, so it shows nothing.';
   const mirrorBtn = mkBtn('Connect a real Sprig', () => { void toggleMirror(); });
   fwCard.append(mirrorNote, mirrorBtn);
+
+  // Camera mirror: point a camera at the real Sprig and show its screen here.
+  const camNote = el('p', 'muted');
+  camNote.style.margin = '14px 0 8px';
+  camNote.textContent = 'No cable? Point your camera at the Sprig to mirror its screen here. View only, and only as sharp as your camera.';
+  const camBtn = mkBtn('Mirror with camera', () => { void onCamButton(); });
+  fwCard.append(camNote, camBtn);
+  if (!cameraMirrorAvailable()) {
+    camBtn.disabled = true;
+    camNote.textContent = 'Camera mirror needs a browser with camera access.';
+  }
   panel.appendChild(fwCard);
+
+  async function onCamButton(): Promise<void> {
+    if (cam) { exitCameraMode(); loadGame(0); status('Camera stopped'); return; }
+    try {
+      status('Allow camera access…');
+      cam = await startCamera();
+      openCalibration();
+    } catch (e) {
+      cam = null;
+      status((e as Error).message, true);
+    }
+  }
+
+  // Full-screen overlay: the live camera with four draggable corners to outline
+  // the Sprig screen. "Start mirroring" hands those corners to the warp.
+  function openCalibration(): void {
+    if (!cam) return;
+    const SVGNS = 'http://www.w3.org/2000/svg';
+    const overlay = el('div', 'cam-overlay');
+    const stage = el('div', 'cam-stage');
+    const video = cam.video;
+    video.className = 'cam-video';
+    const svg = document.createElementNS(SVGNS, 'svg');
+    svg.setAttribute('class', 'cam-poly');
+    svg.setAttribute('viewBox', '0 0 100 100');
+    svg.setAttribute('preserveAspectRatio', 'none');
+    const poly = document.createElementNS(SVGNS, 'polygon');
+    svg.appendChild(poly);
+    stage.append(video, svg);
+
+    const handles = camQuad.map((_, i) => {
+      const h = el('div', 'cam-handle');
+      h.dataset.i = String(i);
+      stage.appendChild(h);
+      return h;
+    });
+
+    const draw = (): void => {
+      poly.setAttribute('points', camQuad.map((p) => `${p.x * 100},${p.y * 100}`).join(' '));
+      handles.forEach((h, i) => {
+        h.style.left = camQuad[i].x * 100 + '%';
+        h.style.top = camQuad[i].y * 100 + '%';
+      });
+    };
+    draw();
+
+    let dragging = -1;
+    const onMove = (e: PointerEvent): void => {
+      if (dragging < 0) return;
+      const r = stage.getBoundingClientRect();
+      camQuad[dragging] = {
+        x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)),
+        y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)),
+      };
+      draw();
+    };
+    handles.forEach((h, i) => {
+      h.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        dragging = i;
+        h.setPointerCapture(e.pointerId);
+      });
+      h.addEventListener('pointerup', (e) => {
+        dragging = -1;
+        h.releasePointerCapture(e.pointerId);
+        store.set('spr-cam-quad', JSON.stringify(camQuad));
+      });
+    });
+    window.addEventListener('pointermove', onMove);
+
+    const bar = el('div', 'cam-bar');
+    const tip = el('p', 'cam-tip');
+    tip.textContent = 'Drag the four dots onto your Sprig screen corners';
+    const startB = mkBtn('Start mirroring', () => { close(); beginMirror(); });
+    startB.classList.add('primary');
+    const cancelB = mkBtn('Cancel', () => { close(); exitCameraMode(); status('Camera cancelled'); });
+    bar.append(tip, startB, cancelB);
+    overlay.append(stage, bar);
+    document.body.appendChild(overlay);
+
+    function close(): void {
+      window.removeEventListener('pointermove', onMove);
+      overlay.remove();
+    }
+  }
+
+  function beginMirror(): void {
+    if (!cam) return;
+    mode = 'mirror';
+    latestMirrorFrame = null;
+    clearActiveGame();
+    stopAutoplay();
+    chipWorker?.postMessage({ type: 'stop' });
+    camBtn.textContent = 'Stop camera';
+    status('Mirroring your Sprig (view only)');
+    const pump = (): void => {
+      if (!cam || mode !== 'mirror') return;
+      try {
+        const data = extractFrame(cam.video, camQuad, camScratch);
+        latestMirrorFrame = { width: 160, height: 128, data: new Uint8ClampedArray(data) };
+      } catch { /* a dropped frame is fine */ }
+      camRaf = requestAnimationFrame(pump);
+    };
+    camRaf = requestAnimationFrame(pump);
+  }
+
+  function exitCameraMode(): void {
+    if (camRaf) { cancelAnimationFrame(camRaf); camRaf = 0; }
+    if (cam) { cam.stop(); cam = null; }
+    camBtn.textContent = 'Mirror with camera';
+  }
 
   // ---------------- panel: device actions + keymap ----------------
   const deviceCard = el('section', 'card');
@@ -375,3 +507,17 @@ const store = {
   get: (k: string): string | null => { try { return localStorage.getItem(k); } catch { return null; } },
   set: (k: string, v: string): void => { try { localStorage.setItem(k, v); } catch { /* ignore */ } },
 };
+
+// Restore the saved camera calibration (four screen corners), or start centered.
+function loadCamQuad(): Quad {
+  try {
+    const raw = store.get('spr-cam-quad');
+    if (raw) {
+      const q = JSON.parse(raw);
+      if (Array.isArray(q) && q.length === 4 && q.every((p) => typeof p?.x === 'number' && typeof p?.y === 'number')) {
+        return q as Quad;
+      }
+    }
+  } catch { /* fall through to default */ }
+  return DEFAULT_QUAD.map((p) => ({ ...p })) as Quad;
+}
