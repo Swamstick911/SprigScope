@@ -284,18 +284,6 @@ a { color: inherit; }
     radial-gradient(46% 30% at 55% 62%, rgba(0, 0, 0, 0.07), transparent 72%),
     radial-gradient(140% 120% at 50% 0%, transparent 72%, rgba(120, 95, 50, 0.13) 100%);
 }
-.ip-input {
-  flex: 1;
-  min-width: 0;
-  font-family: 'Space Mono', monospace;
-  font-size: 13px;
-  padding: 8px 10px;
-  border: 2px solid var(--ink);
-  border-radius: 8px;
-  background: var(--paper);
-  color: var(--ink);
-}
-
 .landing .ln-3d { position: absolute; inset: 0; z-index: 2; }
 @media (min-width: 821px) { .landing .ln-3d { left: 33%; } } /* device sits to the right of the copy */
 .landing .stage { width: 100%; height: 100%; cursor: grab; touch-action: none; }

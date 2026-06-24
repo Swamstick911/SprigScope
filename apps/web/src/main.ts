@@ -5,7 +5,6 @@ import { mountLanding } from './landing';
 import { DEMO_GAMES } from './games';
 import { playTune, unlockAudioOnGesture, setMuted, isMuted } from './tune-player';
 import { connectSprig, serialSupported, type MirrorHandle } from './serial-mirror';
-import { connectWifi, wifiMirrorAvailable, type WifiMirrorHandle } from './wifi-mirror';
 import { chooseMove, type BotConfig } from './autoplay';
 
 const GH_URL = 'https://github.com/Swamstick911/SprigScope';
@@ -61,7 +60,6 @@ function bootApp(vs: VirtualSprig3D): void {
   let wifiFw = false; // uploaded firmware needs a WiFi radio the emulator doesn't have
   let latestMirrorFrame: Framebuffer | null = null;
   let mirror: MirrorHandle | null = null;
-  let wifiMirror: WifiMirrorHandle | null = null;
   let currentBot: BotConfig | null = null;
   let autoTimer = 0;
 
@@ -99,7 +97,7 @@ function bootApp(vs: VirtualSprig3D): void {
   }
   function press(b: Button): void {
     if (mode === 'engine') device.pressButton(b);
-    else if (mode === 'mirror') { mirror?.sendButton(b); wifiMirror?.sendButton(b); }
+    else if (mode === 'mirror') mirror?.sendButton(b);
     else chipWorker?.postMessage({ type: 'press', button: b });
   }
 
@@ -214,47 +212,6 @@ function bootApp(vs: VirtualSprig3D): void {
   mirrorNote.textContent = 'Got a Sprig running streaming firmware? Plug it in over USB to mirror its screen here. A stock Sprig plays games but does not broadcast its screen, so it shows nothing.';
   const mirrorBtn = mkBtn('Connect a real Sprig', () => { void toggleMirror(); });
   fwCard.append(mirrorNote, mirrorBtn);
-
-  const wifiNote = el('p', 'muted');
-  wifiNote.style.margin = '14px 0 8px';
-  wifiNote.textContent = 'On the same WiFi? Enter the IP your Sprig shows on screen to mirror it wirelessly. Run SprigScope locally over http for this.';
-  const wifiRow = el('div', 'row');
-  const ipInput = document.createElement('input');
-  ipInput.className = 'ip-input';
-  ipInput.placeholder = '192.168.x.x';
-  ipInput.inputMode = 'decimal';
-  const wifiBtn = mkBtn('Mirror over WiFi', () => { void toggleWifiMirror(); });
-  wifiRow.append(ipInput, wifiBtn);
-  fwCard.append(wifiNote, wifiRow);
-
-  // Mirror a real Sprig over WiFi: the device serves its screen on the local network.
-  async function toggleWifiMirror(): Promise<void> {
-    if (wifiMirror) {
-      wifiMirror.disconnect();
-      wifiMirror = null;
-      wifiBtn.textContent = 'Mirror over WiFi';
-      loadGame(0);
-      status('Sprig disconnected');
-      return;
-    }
-    if (!wifiMirrorAvailable()) {
-      status('WiFi mirror needs SprigScope on http, not https. Run it locally to use this.', true);
-      return;
-    }
-    if (!ipInput.value.trim()) { status('Type the Sprig IP shown on its screen first.', true); return; }
-    wifiMirror = await connectWifi(
-      ipInput.value,
-      (rgba) => { latestMirrorFrame = { width: 160, height: 128, data: rgba }; },
-      (msg, err) => status(msg, err),
-    );
-    mode = 'mirror';
-    latestMirrorFrame = null;
-    clearActiveGame();
-    stopAutoplay();
-    chipWorker?.postMessage({ type: 'stop' });
-    wifiBtn.textContent = 'Stop WiFi mirror';
-  }
-
   panel.appendChild(fwCard);
 
   // ---------------- panel: device actions + keymap ----------------
