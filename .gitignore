@@ -32,3 +32,6 @@ coverage/
 
 # Docs (kept local, not tracked)
 docs/
+
+# Stray firmware binary (kept local, not part of the repo)
+sprig.uf2
