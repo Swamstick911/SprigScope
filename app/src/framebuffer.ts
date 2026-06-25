@@ -9,7 +9,7 @@ export interface Framebuffer {
     readonly data: Uint8ClampedArray;
 }
 
-export function blackScreen(): Framebuffer {
+export function blankScreen(): Framebuffer {
     const data = new Uint8ClampedArray(FRAME_BYTES_RGBA);
     for (let o = 3; o < data.length; o += 4) data[o] = 255;
     return { width: SCREEN_W, height: SCREEN_H, data };
