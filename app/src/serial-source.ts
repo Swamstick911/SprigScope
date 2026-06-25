@@ -37,7 +37,7 @@ export class SerialSource implements ScreenSource {
     readonly kind = 'serial' as const;
     readonly available = typeof navigator !== 'undefined' && 'serial' in navigator;
 
-    private readonly frameCbs = new Set<(gb: Framebuffer) => void>();
+    private readonly frameCbs = new Set<(fb: Framebuffer) => void>();
     private readonly statusCbs = new Set<StatusFn>();
     private port: SerialPort | null = null;
     private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
@@ -45,7 +45,7 @@ export class SerialSource implements ScreenSource {
 
     onFrame(cb: (fb: Framebuffer) => void): () => void { this.frameCbs.add(cb); return () => this.frameCbs.delete(cb); }
     onStatus(cb: StatusFn): () => void { this.statusCbs.add(cb); return () => this.statusCbs.delete(cb); }
-    private emitFrame(rgba: Uint8ClampedArray): void { const fb = frameFromRgba(rgba); this.frameCbs.forEach(cb => c(fb)); }
+    private emitFrame(rgba: Uint8ClampedArray): void { const fb = frameFromRgba(rgba); this.frameCbs.forEach((cb) => cb(fb)); }
     private status(msg: string, err = false): void { this.statusCbs.forEach((c) => c(msg, err)); }
 
     async start(): Promise<void> {
@@ -74,10 +74,11 @@ export class SerialSource implements ScreenSource {
         void (async () => {
             try {
                 while (!this.stopped && port.readable) {
-                    this.reader = port.readable.getReader();
+                    const reader = port.readable.getReader();
+                    this.reader = reader;
                     try {
                         for(;;) {
-                            const { value, done } = await this.reader.read();
+                            const { value, done } = await reader.read();
                             if (done) break;
                             if (value) {
                                 bytesIn += value.length;
@@ -86,7 +87,7 @@ export class SerialSource implements ScreenSource {
                             }
                         }
                     } finally {
-                        this.reader.releaseLock();
+                        reader.releaseLock();
                         this.reader = null;
                     }
                 }

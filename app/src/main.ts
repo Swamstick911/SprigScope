@@ -5,7 +5,7 @@ import { CameraSource } from './camera-source';
 import { blankScreen } from './framebuffer';
 import type { ScreenSource } from './source';
 
-const app = document.querySelector<HTMLDivElement>('#app');
+const app = document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML = `
   <header class="topbar">
     <span class="logo">Sprig<b>Scope</b></span>

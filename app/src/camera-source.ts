@@ -72,7 +72,7 @@ export class CameraSource implements ScreenSource {
         this.video.playsInline = true; this.video.muted = true;
         this.video.srcObject = this.stream;
         await this.video.play();
-        await this.video.calibrate();
+        await this.calibrate();
         this.status('Mirroring your Sprig (view only)');
         this.pump();
     }
@@ -101,13 +101,13 @@ export class CameraSource implements ScreenSource {
 
     private calibrate(): Promise<void> {
         return new Promise((resolve, reject) => {
-            const video = this.video;
+            const video = this.video!;
             const SVGNS = 'http://www.w3.org/2000/svg';
             const overlay = div('cam-overlay'), stage = div('cam-stage');
             video.className = 'cam-video';
             const svg = document.createElementNS(SVGNS, 'svg');
             svg.setAttribute('class', 'cam-poly'); svg.setAttribute('viewBox', '0 0 100 100'); svg.setAttribute('preserveAspectRatio', 'none');
-            const poly = document.createElementNS(SVGNS, 'polygons');
+            const poly = document.createElementNS(SVGNS, 'polygon');
             svg.appendChild(poly);
             stage.append(video, svg);
 
