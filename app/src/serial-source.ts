@@ -2,6 +2,7 @@ import {
     rgb565ToRgba, frameFromRgba, FRAME_PIXELS, FRAME_BYTES_RGBA, type Framebuffer,
 } from './framebuffer';
 import type { ScreenSource, StatusFn } from './source';
+import type { Button } from './buttons';
 
 const MAGIC = [0xa5, 0x5a, 0xc3, 0x3c];
 const FRAME_BYTES_565 = FRAME_PIXELS * 2;
@@ -41,6 +42,7 @@ export class SerialSource implements ScreenSource {
     private readonly statusCbs = new Set<StatusFn>();
     private port: SerialPort | null = null;
     private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+    private writer: WritableStreamDefaultWriter<Uint8Array> | null = null;
     private stopped = false;
 
     onFrame(cb: (fb: Framebuffer) => void): () => void { this.frameCbs.add(cb); return () => this.frameCbs.delete(cb); }
@@ -55,6 +57,7 @@ export class SerialSource implements ScreenSource {
         const port = await navigator.serial.requestPort();
         await port.open({ baudRate: 115200 });
         this.port = port;
+        this.writer = port.writable ? port.writable.getWriter() : null; 
         this.status('Port open, listening for the Sprig screen...');
 
         let bytesIn = 0, framesIn = 0;
@@ -97,11 +100,17 @@ export class SerialSource implements ScreenSource {
         })();
     }
 
+    sendButton(btn: Button): void {
+        if (!this.writer) return;
+        void this.writer.write(new Uint8Array([btn.toUpperCase().charCodeAt(0)])).catch(() => { });
+    }
+
     async stop(): Promise<void> {
         this.stopped = true;
         try { await this.reader?.cancel(); } catch { }
         try { await this.port?.close(); } catch { }
         this.reader = null;
+        this.writer = null;
         this.port = null;
     }
 }

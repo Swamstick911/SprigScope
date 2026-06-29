@@ -1,7 +1,7 @@
 import type { Framebuffer } from './framebuffer';
+import type { Button } from './buttons';
 
 export type SourceKind = 'serial' | 'camera';
-
 export type StatusFn = (message: string, isError?: boolean) => void;
 
 export interface ScreenSource {
@@ -11,4 +11,5 @@ export interface ScreenSource {
     stop(): Promise<void>;
     onFrame(cb: (fb: Framebuffer) => void): () => void;
     onStatus(cb: StatusFn): () => void;
+    sendButton?(btn: Button): void;
 }
