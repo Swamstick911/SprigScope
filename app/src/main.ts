@@ -40,7 +40,7 @@ function mountMirror(): void {
     if (active) { await active.stop(); active = null; }
     display.draw(blankScreen());
   }
-  const press = (btn: Button): void => { active?.sendButton(btn); };
+  const press = (btn: Button): void => { active?.sendButton?.(btn); };
 
   root.querySelector('#connect')!.addEventListener('click', () => void activate(new SerialSource()));
   root.querySelector('#camera')!.addEventListener('click', () => void activate(new CameraSource()));
@@ -64,9 +64,12 @@ function mountMirror(): void {
   });
   window.addEventListener('keydown', (e) => {
     const k = e.key.toLowerCase();
-    if (padKeys.has(k)) return;
+    if (!padKeys.has(k)) return;
     e.preventDefault();
     press(k as Button);
+    root.querySelector(`.key[data-key="${k}"]`)?.classList.add('down');
+  });
+  window.addEventListener('keyup', (e) => {
     root.querySelector(`.key[data-key="${e.key.toLowerCase()}"]`)?.classList.remove('down');
   });
 
@@ -80,7 +83,7 @@ function mountMirror(): void {
 
 function pad (up: string, left: string, down: string, right: string): string {
   const cells = ['', up, '', left, '', right, '', down, ''];
-  return `<div class="pad>` + cells.map((k) =>
+  return `<div class="pad">` + cells.map((k) =>
     k ? `<div class="key" data-key="${k}">${k.toUpperCase()}</div>` : '<div class="key spacer"></div>',
   ).join('') + '</div>';
 }
@@ -88,7 +91,7 @@ function pad (up: string, left: string, down: string, right: string): string {
 function mirrorHTML(): string {
   const faqs = FAQS.map((qa, i) => `
     <div class="faq-item">
-      <button class="faq-q"><span class="faq-num">${i + 1}</span><span class="faq-text">${escapeHtml(qa.q)}</span><span class="faq-chev"></span></button>
+      <button class="faq-q"><span class="faq-num">${i + 1}</span><span class="faq-text">${escapeHtml(qa.q)}</span><span class="faq-chev">⌄</span></button>
       <div class="faq-a">${escapeHtml(qa.a)}</div>
     </div>
   `).join('');
@@ -96,16 +99,16 @@ function mirrorHTML(): string {
   return `
     <header class="topbar">
       <span class="logo">Sprig<b>Scope</b></span>
-      <a class="gh" href="${GH_URL}" target="_blank" rel="noopener">GitHub </a>
+      <a class="gh" href="${GH_URL}" target="_blank" rel="noopener">GitHub ↗</a>
     </header>
     <main class="mirror">
-      <div class="mirror">
+      <div class="console">
         ${pad('w', 'a', 's', 'd')}
         <div class="screen-wrap">
           <div class="screen-box"></div>
           <div class="screen-controls">
             <button class="btn-mini" id="screenshot">Screenshot</button>
-            <button class="btn-mini" id=:"stop">Stop</button>
+            <button class="btn-mini" id="stop">Stop</button>
           </div>
           <div class="status" id="status"><span class="dot"></span>Idle</div>
         </div>

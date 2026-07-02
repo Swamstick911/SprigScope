@@ -33,4 +33,4 @@ export const FAQS: QA[] = [
         q: "Is it open source?",
         a: "Yep! Built on Hack Club's open source Sprig and released under the MIT license. Source is on GitHub."
     },
-];  
+];
